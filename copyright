@@ -1,0 +1,13 @@
+The gmane indexer was taken from
+  http://search.gmane.org/~xapian/
+and adapted to Debian list archives.
+
+From the original authors:
+
+Much of the code is Copyright (C) Olly Betts 2004,2005,2006
+
+The indexer is partly based on the we:search indexer, which is licensed under
+the GPL and copyright Lars Magne Ingebrigtsen.
+
+Debian adaptations (c) 2007 by Thomas Viehmann and also licensed under
+the GNU GPL Version 2 or above.
