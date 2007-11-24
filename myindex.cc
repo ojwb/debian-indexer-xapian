@@ -7,30 +7,28 @@
 #include <iostream>
 #include <gmime/gmime.h>
 #include <string.h>
+#include <set>
+#include <fstream>
 
 #include "tokenizer.h"
 #include "xapianglue.h"
 using namespace std;
 
-static void freek(gpointer k, gpointer v, gpointer d)
+string msgid_strip(string aline)
 {
-  g_free(k);
+   size_t l = aline.find_first_of('<');
+   size_t r = aline.find_last_of('>');
+   if (l<r)
+     return aline.substr(l+1,r-l-1);
+   return aline;
 }
-
-time_t start_time;
 
 int main(int argc, char** argv)
 {
   GMimeStream *stream;
   GMimeParser *parser;
   GMimeMessage *msg = 0;
-  GHashTable* idset;
-  gpointer a,b;
-  time_t date;
-  struct tm tm;
 
-  size_t offset, oldoffs;
-  const char *xref;
   int fh;
   
 
@@ -39,14 +37,15 @@ int main(int argc, char** argv)
   start_time = time(NULL);
 
   // g_mime_init(GMIME_INIT_FLAG_UTF8);
-  cout << argc << "  args" << endl;
-  
+  // cout << argc << "  args" << endl;
+  set<string> spamids;
+  set<string> seenids;
+
   int argi;
   for (argi = 1; argi<argc; argi++) {
     // "/org/lists.debian.org/lists/debian-project/2007/debian-project-200709"
     string fn(argv[argi]);
     fh = open(fn.c_str(), O_RDONLY);
-  
     string basename = fn.substr(fn.find_last_of('/')+1);
     int i = basename.find_last_of('-');
     string list = basename.substr(0,i);
@@ -60,15 +59,41 @@ int main(int argc, char** argv)
     if (month != 0)
       cout << month;
     cout << endl;
-    idset = g_hash_table_new(g_str_hash, g_str_equal);
+
+    spamids.clear();
+    string spamfn = fn+".spam";
+    ifstream spamf(spamfn.c_str());
+    if (spamf) {
+       string aline;
+       while (getline(spamf, aline)) {
+	  string::iterator i = aline.begin();
+	  while (i != aline.end() && *i != ':') {
+	     if (isalnum((unsigned char)*i) || strchr(".-+*", *i)) {
+		*i = tolower(*i);
+		i++;
+	     } else {
+		aline.erase(i);
+	     }
+	  }
+	  if (aline.substr(0,21) == "skip-spam-message-id:") {
+	    aline.erase(0,21);
+	    i = aline.begin();
+	    while (i != aline.end() && *i == ' ')
+	      aline.erase(i);
+	    spamids.insert(msgid_strip(aline));
+	  }
+       }
+    } 
+    // cout << "number spam msgids: " << spamids.size() << endl;
+     seenids.clear();
+
     int msgnum = 0;
     
     stream = g_mime_stream_fs_new(fh);
 
-    memset(&tm, 0, sizeof(tm));
     parser = g_mime_parser_new_with_stream(stream);
     g_mime_parser_set_scan_from(parser, TRUE);
-    while (! g_mime_parser_eos(parser)) //((msg != 0) && (oldoffs != offset))
+    while (! g_mime_parser_eos(parser))
       {
        
 	msg = g_mime_parser_construct_message(parser);
@@ -76,38 +101,39 @@ int main(int argc, char** argv)
 	if (msg != 0)
 	  {
 	       
-            xref = g_mime_message_get_header(msg, "Message-Id");
-            if (!xref) {
-              fprintf(stderr, "\nNo msgid\n");
+	    string msgid = msgid_strip(g_mime_message_get_header(msg, "Message-Id"));
+            if (msgid == "") {
+	      fprintf(stderr, "\nNo msgid\n");
             }
-            else if (g_hash_table_lookup_extended(idset, xref, &a, &b))
-              {
-                fprintf(stdout, "\ndupemsgid: %s\n",xref);		  
-              }
-            else
-              {
-                // fprintf(stdout, "msgid: %s\n",xref);
-		cout << "." << flush;
-                g_hash_table_insert(idset, g_strdup(xref), NULL);
-                document * doc = parse_article(msg);
-                if (doc != NULL) {
-               
-                  xapian_add_document(doc, list, year, month, msgnum);
-
-                }
-                msgnum++;
-             
-              }
-            g_object_unref(msg);
-          }     }
+            else if (seenids.find(msgid) != seenids.end()) {
+	      // cerr << endl << "dupemsgid: " << msgid << endl;
+	    }
+	    else if (spamids.find(msgid) != spamids.end()) {
+	      // cerr << endl << "spam: " << msgid << endl;
+	       xapian_delete_document(list, year, month, msgnum);
+	       seenids.insert(msgid);
+	       msgnum++;
+	    }
+            else {
+	     //  cerr << endl << "msgid: " << msgid << endl;
+	       cout << "." << flush;
+	       seenids.insert(msgid);
+	       document * doc = parse_article(msg);
+	       if (doc != NULL) {
+		  xapian_add_document(doc, list, year, month, msgnum);
+	       }
+	       msgnum++;
+	    }
+	    g_object_unref(msg);
+          } 
+      }
   
-    g_hash_table_foreach(idset, freek, NULL);
-    g_mime_stream_unref(stream);
-    close(fh);
-    xapian_flush();
+     g_mime_stream_unref(stream);
+     close(fh);
+     xapian_flush();
   }
   
   tokenizer_fini();
-  printf("DONE\n");
+  printf("\nDONE\n");
 
 }

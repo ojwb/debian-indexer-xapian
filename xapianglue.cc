@@ -99,10 +99,22 @@ xapian_add_group_filter(const string & group)
     }
 }
 
-static int start_time = 0;
+time_t start_time;
 static time_t last_start_time = 0;
 static int last_total_files = 0;
 static int total_files = 0;
+
+void
+xapian_delete_document(std::string & list, int year, int month, int  msgnum) 
+{
+   char buf[64];
+
+   sprintf(buf, "%04d%02d%05d", year,month,msgnum);
+   string ourxapid("Q");
+   ourxapid += list;
+   ourxapid += buf;
+   db.delete_document(ourxapid);
+}
 
 void
 xapian_add_document(const document *d, std::string & list, int year, int month, int  msgnum)
