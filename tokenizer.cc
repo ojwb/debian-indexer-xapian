@@ -401,15 +401,15 @@ document* parse_article(GMimeMessage* msg) {
   
   {
     xapian_new_document();
-    default_charset = NULL;
+    default_charset = NULL; // TV-TODO
     
     if (default_charset == NULL)
       default_charset = "iso-8859-1";
     doc_body_length = 0;
     const char *from = g_mime_message_get_sender(msg);
     if (from) {
-	string name;
-	if (strstr(from, "=?")) {
+	string name = from;
+	/* if (strstr(from, "=?")) {
 	    char * copy = strdup(from);
 	    if (!copy) {
 		printf("strdup failed\n");
@@ -444,7 +444,7 @@ document* parse_article(GMimeMessage* msg) {
 	    }
 	}
 
-	if (name.empty()) name = from;
+	if (name.empty()) name = from; */
 
 	string author;
 	InternetAddressList *iaddr_list;
@@ -518,14 +518,21 @@ document* parse_article(GMimeMessage* msg) {
 
     const char * subj = g_mime_message_get_subject(msg);
     if (subj) {
-      char * subject;
+      char * subject = strdup(subj);
+      /* g_mime_message_get_subject decodes to UTF8 allright.
+       * unless there are problems? but the below doesn't help.
+       cerr << "s1:" << subj << endl;
       if (strstr(subj, "=?")) {
 	subject = g_mime_utils_header_decode_text((unsigned char *) subj);
+        cerr << "s2:" << subject << endl;
       } else if (g_mime_utils_text_is_8bit((const unsigned char*) subj, strlen(subj))) {
 	subject = convert_to_utf8(subj, default_charset);
+        cerr << "s2b:" << subject << endl;
       } else {
 	subject = strdup(subj);
+        cerr << "s2c:" << subject << endl;
       }
+      cerr << "s3:" << subject << endl; */
       doc.subject.erase();
       if (subject) {
 	unsigned char *s = (unsigned char *)subject;
@@ -562,55 +569,8 @@ dontindex:
   return NULL;
 }
 
-static void read_conf_file(void) {
-  FILE *conf = fopen("/etc/gmane.conf", "r");
-  if (!conf) {
-    fprintf(stderr, "Couldn't open /etc/gmane.conf - I give up!\n");
-    exit(1);
-  }
-      
-  char buf[8192];
-  char *line, *group_name, *description, *charset;
-  int i = 0;
-
-  while (fgets(buf, 8192, conf) != NULL) {
-    if ((*buf != '#') &&
-	strchr(buf, ':') &&
-	(! strstr(buf, ":removed=")) &&
-	(! strstr(buf, ":denied=")) &&
-	(! strstr(buf, ":index=noindex"))) {
-      i = 0;
-      group_name = NULL;
-      description = NULL;
-      charset = NULL;
-      strtok(buf, ":\n");
-      while ((line = strtok(NULL, ":\n")) != NULL) {
-	i++;
-	if (i == 1)
-	  group_name = line;
-	else if (i == 3)
-	  description = line;
-	else if (i > 5 && strncmp(line, "charset=", 8) == 0)
-	  charset = line + 8;
-      }
-
-      if (group_name && description) {
-	if (strncmp(group_name, "gmane.", 6) != 0) {
-	  fprintf(stderr, "Ignoring non-gmane.* group: %s\n", group_name);
-	  continue;
-	}
-	if (charset && charset[0])
-	  charsets.insert(make_pair(string(group_name + 6), string(charset)));
-	groups.insert(string(group_name + 6));
-      }
-    }
-  }
-  fclose(conf);
-}
-
 void tokenizer_init(void) {
   g_mime_init(GMIME_INIT_FLAG_UTF8);
-  // read_conf_file();
 }
 
 void tokenizer_fini(void) {
