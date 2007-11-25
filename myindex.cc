@@ -12,6 +12,7 @@
 
 #include "tokenizer.h"
 #include "xapianglue.h"
+#include "util.h"
 using namespace std;
 
 string msgid_strip(string aline)
@@ -93,41 +94,42 @@ int main(int argc, char** argv)
 
     parser = g_mime_parser_new_with_stream(stream);
     g_mime_parser_set_scan_from(parser, TRUE);
-    while (! g_mime_parser_eos(parser))
-      {
+    while (! g_mime_parser_eos(parser)) {
+       msg = g_mime_parser_construct_message(parser);
        
-	msg = g_mime_parser_construct_message(parser);
-        
-	if (msg != 0)
-	  {
-	       
-	    string msgid = msgid_strip(g_mime_message_get_header(msg, "Message-Id"));
-            if (msgid == "") {
-	      fprintf(stderr, "\nNo msgid\n");
-            }
-            else if (seenids.find(msgid) != seenids.end()) {
-	      // cerr << endl << "dupemsgid: " << msgid << endl;
-	    }
-	    else if (spamids.find(msgid) != spamids.end()) {
-	      // cerr << endl << "spam: " << msgid << endl;
-	       xapian_delete_document(list, year, month, msgnum);
-	       seenids.insert(msgid);
-	       msgnum++;
-	    }
-            else {
-	     //  cerr << endl << "msgid: " << msgid << endl;
-	       cout << "." << flush;
-	       seenids.insert(msgid);
-	       document * doc = parse_article(msg);
-	       if (doc != NULL) {
-		  xapian_add_document(doc, list, year, month, msgnum);
-	       }
-	       msgnum++;
-	    }
-	    g_object_unref(msg);
-          } 
-      }
-  
+       if (msg != 0) {
+	  const char* raw_msgid = g_mime_message_get_header(msg, "Message-Id");
+	  string msgid;
+	  if (raw_msgid != NULL)
+	    msgid = msgid_strip(raw_msgid);
+	  else 
+	    msgid = fake_msgid(msg);
+	  if (msgid == "") {
+	     fprintf(stderr, "\nNo msgid\n");
+	  }
+	  else if (seenids.find(msgid) != seenids.end()) {
+	     //cerr << endl << "dupemsgid: " << msgid << endl;
+	  }
+	  else if (spamids.find(msgid) != spamids.end()) {
+	     //cerr << endl << "spam: " << msgid << endl;
+	     xapian_delete_document(list, year, month, msgnum);
+	     seenids.insert(msgid);
+	     msgnum++;
+	  }
+	  else {
+	     //cerr << endl << "msgid: " << msgid << endl;
+	     cout << "." << flush;
+	     seenids.insert(msgid);
+	     document * doc = parse_article(msg);
+	     if (doc != NULL) {
+		xapian_add_document(doc, list, year, month, msgnum);
+	     }
+	     msgnum++;
+	  }
+	  g_object_unref(msg);
+       } 
+    }
+     
      g_mime_stream_unref(stream);
      close(fh);
      xapian_flush();
