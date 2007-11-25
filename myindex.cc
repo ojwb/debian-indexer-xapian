@@ -31,7 +31,8 @@ int main(int argc, char** argv)
   GMimeMessage *msg = 0;
 
   int fh;
-  
+
+  size_t unflushed_messages = 0;
 
   tokenizer_init();
   xapian_init();
@@ -123,6 +124,7 @@ int main(int argc, char** argv)
 	     document * doc = parse_article(msg);
 	     if (doc != NULL) {
 		xapian_add_document(doc, list, year, month, msgnum);
+		unflushed_messages++;
 	     }
 	     msgnum++;
 	  }
@@ -132,8 +134,13 @@ int main(int argc, char** argv)
      
      g_mime_stream_unref(stream);
      close(fh);
-     xapian_flush();
+     if (unflushed_messages>100000) {
+	xapian_flush();
+	unflushed_messages = 0;
+     }
   }
+  if (unflushed_messages>0)
+     xapian_flush();
   
   tokenizer_fini();
   printf("\nDONE\n");
