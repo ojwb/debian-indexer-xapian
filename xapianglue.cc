@@ -5,6 +5,7 @@
 extern "C" {
 #include "tokenizer.h"
 #include "util.h"
+#include <glob.h>  
 }
 
 #include "xapianglue.h"
@@ -12,34 +13,22 @@ extern "C" {
 //#include "indextext.h"
 
 #include <string>
+#include <map>
+#include <iostream>
+
 using namespace std;
 
 Xapian::WritableDatabase db;
 Xapian::Document * doc = NULL;
 Xapian::TermGenerator indexer;
 
+string index_globmask("/org/lists.debian.org/xapian/data/listdb*");
+
 const char *index_dir = "/org/lists.debian.org/xapian/data/listdb"; // FIXME
 
 static int counter = 0;
+static string language("english");
 
-static bool debug = false;
-
-extern "C" void
-xapian_init(void)
-{
-    try {
-	string dbpath(index_dir);
-	/* char buf[256];
-	sprintf(buf, "-%03d", counter++);
-	dbpath += buf; */
-       db = Xapian::WritableDatabase(dbpath, Xapian::DB_CREATE_OR_OPEN);
-	const char *p = getenv("DEBUG");
-	if (p && *p) debug = true;
-        indexer.set_stemmer(Xapian::Stem("english")); // TV-TODO: do better
-    } catch (const Xapian::Error &e) {
-	merror(e.get_msg().c_str());
-    }
-}
 
 extern "C" void
 xapian_flush(void)
@@ -72,28 +61,13 @@ xapian_tokenise(const char* prefix, const char* text, int len)
     }
     try {
       indexer.set_document(*doc);
-	if (debug) {
+	if (verbose>=2) {
 	    printf("index:[");
 	    fwrite(text, 1, len, stdout);
 	    printf("]\n");
 	}
         indexer.index_text(text, 1,  prefix ? prefix : "");
         
-    } catch (const Xapian::Error &e) {
-	merror(e.get_msg().c_str());
-    }
-}
-
-void
-xapian_add_group_filter(const string & group)
-{
-    if (doc == NULL)
-	merror("xapian_add_group_filter called before xapian_new_document");
-    try {
-	string filter = string("G") + group;
-	doc->add_term(filter);
-	if (debug) printf("group:[%s]\n", filter.c_str());
-	// Could add wildcarded filters here.
     } catch (const Xapian::Error &e) {
 	merror(e.get_msg().c_str());
     }
@@ -126,7 +100,7 @@ xapian_add_document(const document *d, std::string & list, int year, int month, 
     if (!d->email.empty()) {
 	try {
 	    doc->add_term(string("A") + d->email);
-	    if (debug) printf("author:[A%s]\n", d->email.c_str());
+	    if (verbose >= 2) printf("author:[A%s]\n", d->email.c_str());
 	} catch (const Xapian::Error &e) {
 	    merror(e.get_msg().c_str());
 	}
@@ -134,7 +108,7 @@ xapian_add_document(const document *d, std::string & list, int year, int month, 
     if (!d->author.empty()) {
 	try {
 	   xapian_tokenise("A", d->author.c_str(), d->author.length());
-	    if (debug) printf("author:[A%s]\n", d->author.c_str());
+	    if (verbose >= 2) printf("author:[A%s]\n", d->author.c_str());
 	} catch (const Xapian::Error &e) {
 	    merror(e.get_msg().c_str());
 	}
@@ -147,6 +121,18 @@ xapian_add_document(const document *d, std::string & list, int year, int month, 
     ourxapid += list;
     ourxapid += buf;
     doc->add_term(ourxapid);
+    // G list
+    // L language
+    // Q id
+    // 
+    doc->add_term(string("L")+language);
+    
+    sprintf(buf, "%04d%02d", year,month);
+    string datecode(buf);
+    doc->add_value(VALUE_DATECODE, datecode);
+    doc->add_term((string("XM")+list+"-")+buf);
+    
+    
 
     if (month != 0) 
 	sprintf(buf, "/%04d/%02d/msg%05d.html", year,month, msgnum);
@@ -173,7 +159,7 @@ xapian_add_document(const document *d, std::string & list, int year, int month, 
 
     data += d->body;
 
-    if (debug) printf("data:[%s]\n\n", data.c_str());
+    if (verbose >= 2) printf("data:[%s]\n\n", data.c_str());
     doc->set_data(data);
     db.replace_document(ourxapid,*doc);
     delete doc;
@@ -196,14 +182,17 @@ xapian_add_document(const document *d, std::string & list, int year, int month, 
 	    int last_rate = 0;
 	    if (last_elapsed)
 		last_rate = (total_files - last_total_files) / last_elapsed;
-	    printf("    %d files (%d/s; %d/s last %d seconds)\n",
-		   total_files, (int)(total_files/elapsed), last_rate,
-		   last_elapsed);
+            if (verbose > 0)
+	      printf("    %d files (%d/s; %d/s last %d seconds)\n",
+                     total_files, (int)(total_files/elapsed), last_rate,
+                     last_elapsed);
 	    last_start_time = now;
 	    last_total_files = total_files;
 	}
     }
 }
+
+
 
 extern "C" char *index_file_name(char *name) {
   static char file_name[1024];
@@ -211,4 +200,95 @@ extern "C" char *index_file_name(char *name) {
   strcat(file_name, "/");
   strcat(file_name, name);
   return file_name;
+}
+
+map<const string, size_t> monthtodbmap;
+glob_t globbuf;
+
+void init_monthtodbmap()
+{
+  int res = glob(index_globmask.c_str(), 0, NULL, &globbuf);
+  if (res==0) {
+    for (size_t i=0; globbuf.gl_pathv[i] != NULL; i++) {
+      if (verbose>0)
+        cout << globbuf.gl_pathv[i] << ":" << endl;
+      Xapian::Database a_db(globbuf.gl_pathv[i]);
+      const string listPrefix("XM");
+      for (Xapian::TermIterator ti = a_db.allterms_begin(listPrefix);
+           ti != a_db.allterms_end(listPrefix);
+           ti++) {
+        monthtodbmap[(*ti).substr(2)] = i;
+        if (verbose>0)
+          cout << "  " << (*ti).substr(2) << endl;
+      }
+    }
+    //globfree(&globbuf);
+  }
+  else if (res!=GLOB_NOMATCH) {
+    merror("problem initializing stuff");
+  }
+}
+
+extern "C" void
+xapian_init(void)
+{
+  try {
+    init_monthtodbmap();
+    indexer.set_stemmer(Xapian::Stem("english")); // TV-TODO: do better
+  } catch (const Xapian::Error &e) {
+    merror(e.get_msg().c_str());
+  }
+}
+
+static string curdb;
+
+void xapian_open_db_for_month(const string month) 
+{
+  map<const string, size_t>::iterator i = monthtodbmap.find(month);
+  if (i != monthtodbmap.end()) {
+    if (curdb != globbuf.gl_pathv[i->second]) {
+      curdb = globbuf.gl_pathv[i->second];
+      db = Xapian::WritableDatabase(curdb, Xapian::DB_CREATE_OR_OPEN);
+    }    
+    total_files = db.get_doccount();
+  }
+  else {
+    total_files = -1;
+    while ((total_files < 0) or (total_files > INDEX_CHUNK_SIZE)) {
+      string dbpath(index_dir);
+      char buf[256];
+      sprintf(buf, "-%03d", counter);
+      dbpath += buf;
+      if (curdb != dbpath) {
+        curdb = dbpath;
+        db = Xapian::WritableDatabase(dbpath, Xapian::DB_CREATE_OR_OPEN);
+      }
+      total_files = db.get_doccount();
+      if (total_files > INDEX_CHUNK_SIZE)
+        counter++;
+    }
+  }  
+}
+
+void xapian_set_stemmer(const string lang)
+{
+  if (lang == language) {
+    return;    
+  }
+  
+  try { 
+    string languages(" ");
+    languages += Xapian::Stem::get_available_languages();
+    languages += " ";
+    if ((lang.length() == 0) || (languages.find(lang) == string::npos)) {
+      indexer.set_stemmer(Xapian::Stem());
+      language = "";
+    }
+    else {
+      indexer.set_stemmer(Xapian::Stem(lang));
+      language = lang;
+    }
+  } catch (const Xapian::Error &e) {
+    merror(e.get_msg().c_str());
+  }
 }

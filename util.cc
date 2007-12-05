@@ -7,6 +7,7 @@
 #include <gcrypt.h>
 
 using namespace std;
+int verbose = 0;
 
 /* Say whether a string is all-numerical. */
 int is_number(const char *string) {

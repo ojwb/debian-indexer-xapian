@@ -33,6 +33,11 @@ int main(int argc, char** argv)
   int fh;
 
   size_t unflushed_messages = 0;
+  int argi;
+  for (argi = 1; (argi<argc) && (strcmp(argv[argi],"-v")==0); argi++) {
+    verbose += 1;
+  }
+  
 
   tokenizer_init();
   xapian_init();
@@ -42,13 +47,31 @@ int main(int argc, char** argv)
   // cout << argc << "  args" << endl;
   set<string> spamids;
   set<string> seenids;
-
-  int argi;
-  for (argi = 1; argi<argc; argi++) {
+  
+  bool langnext = false;
+  // argi inited above
+  for (; argi<argc; argi++) {
     // "/org/lists.debian.org/lists/debian-project/2007/debian-project-200709"
     string fn(argv[argi]);
+    if (langnext) {
+      xapian_set_stemmer(fn);
+      if (verbose != 0)
+        cout << "language: " << fn << endl;
+      langnext = false;
+      continue;
+    }
+    if (fn == "-v") {
+      verbose += 1;
+      continue;
+    }
+    if (fn == "-l") {
+      langnext = true;
+      continue;
+    }
+
     fh = open(fn.c_str(), O_RDONLY);
     string basename = fn.substr(fn.find_last_of('/')+1);
+    xapian_open_db_for_month(basename);
     int i = basename.find_last_of('-');
     string list = basename.substr(0,i);
     string yearmonth = basename.substr(i+1);
@@ -106,7 +129,7 @@ int main(int argc, char** argv)
 	  else 
 	    msgid = fake_msgid(msg);
 	  if (msgid == "") {
-	     fprintf(stderr, "\nNo msgid\n");
+            cerr << endl << "No msgid" << endl;
 	  }
 	  else if (seenids.find(msgid) != seenids.end()) {
 	     //cerr << endl << "dupemsgid: " << msgid << endl;
@@ -119,14 +142,15 @@ int main(int argc, char** argv)
 	  }
 	  else {
 	     //cerr << endl << "msgid: " << msgid << endl;
-	     cout << "." << flush;
-	     seenids.insert(msgid);
-	     document * doc = parse_article(msg);
-	     if (doc != NULL) {
-		xapian_add_document(doc, list, year, month, msgnum);
-		unflushed_messages++;
-	     }
-	     msgnum++;
+            if (verbose > 0)
+              cout << "." << flush;
+            seenids.insert(msgid);
+            document * doc = parse_article(msg);
+            if (doc != NULL) {
+              xapian_add_document(doc, list, year, month, msgnum);
+              unflushed_messages++;
+            }
+            msgnum++;
 	  }
 	  g_object_unref(msg);
        } 
@@ -143,6 +167,7 @@ int main(int argc, char** argv)
      xapian_flush();
   
   tokenizer_fini();
-  printf("\nDONE\n");
+  if (verbose != 0)
+    cout << endl << "DONE" << endl;
 
 }

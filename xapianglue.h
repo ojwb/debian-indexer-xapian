@@ -3,6 +3,10 @@
 extern "C" {
 #endif
 
+enum value_slot {
+  VALUE_DATECODE = 0
+};
+
 void xapian_init(void);
 void xapian_flush(void);
 void xapian_new_document(void);
@@ -18,9 +22,11 @@ char *index_file_name(char *name);
 
 #include <string>
 
-void xapian_add_group_filter(const std::string & group);
 void xapian_add_document(const document *d, std::string & list, int year, int month, int msgnum);
 void xapian_delete_document(std::string & list, int year, int month, int  msgnum);
+void xapian_set_stemmer(const std::string lang);
+void xapian_open_db_for_month(const std::string month);
+
 
 #endif
 

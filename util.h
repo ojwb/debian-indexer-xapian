@@ -15,6 +15,6 @@ void merror(const char *error);
 #endif
 
 std::string fake_msgid(GMimeMessage* msg);
-
+extern int verbose;
 
 #endif

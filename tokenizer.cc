@@ -24,6 +24,7 @@
 
 #include "tokenizer.h"
 #include "xapianglue.h"
+#include "util.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -49,8 +50,6 @@ using namespace std;
 
 static map<string, string> charsets;
 static set<string> groups;
-
-#define DEBUG 0
 
 // FIXME:
 // Need to scan gmane.conf and find the line ":groupname:", then look for
@@ -475,7 +474,8 @@ document* parse_article(GMimeMessage* msg) {
 		author.erase(0, 1);
 	    }
 	    if (pre != author) {
-		cout << "Stripped " << pre << " to " << author << endl;
+		if (verbose > 0)
+                  cout << "Stripped " << pre << " to " << author << endl;
 	    }
 
 	    if (!author.empty()) {
@@ -498,7 +498,8 @@ document* parse_article(GMimeMessage* msg) {
 	    } else {
 		internet_address_set_name(iaddr, "");
 		char * address = internet_address_to_string(iaddr, FALSE);
-		cout << "group email " << name << " -> " << address << endl;
+		if (verbose > 0)
+                  cout << "group email " << name << " -> " << address << endl;
 		doc.email = address;
 		free(address);
 		if (!doc.email.empty() && doc.email[doc.email.size() - 1] == '@') {
@@ -507,7 +508,8 @@ document* parse_article(GMimeMessage* msg) {
 	    }
 	    internet_address_list_destroy(iaddr_list);
 	} else {
-	    cout << "Failed to parse From: " << name << endl;
+            if (verbose > 0)
+              cout << "Failed to parse From: " << name << endl;
 	    doc.author = name;
 	    doc.email.erase();
 	}
