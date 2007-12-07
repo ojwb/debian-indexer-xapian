@@ -126,8 +126,11 @@ xapian_add_document(const document *d, std::string & list, int year, int month, 
     // Q id
     if (language.length()>0)
       doc->add_term(string("L")+language);
-    
-    sprintf(buf, "%04d%02d", year,month);
+
+    if (month != 0)
+      sprintf(buf, "%04d%02d", year,month);
+    else
+      sprintf(buf, "%04d", year);      
     string datecode(buf);
     doc->add_value(VALUE_DATECODE, datecode);
     doc->add_term((string("XM")+list+"-")+buf);

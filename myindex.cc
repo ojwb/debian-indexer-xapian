@@ -33,6 +33,7 @@ int main(int argc, char** argv)
   int fh;
 
   size_t unflushed_messages = 0;
+  size_t flush_interval = 100000;
   int argi;
   for (argi = 1; (argi<argc) && (strcmp(argv[argi],"-v")==0); argi++) {
     verbose += 1;
@@ -48,27 +49,44 @@ int main(int argc, char** argv)
   set<string> spamids;
   set<string> seenids;
   
-  bool langnext = false;
+  enum {
+    NEXT_NOTHING = 0,
+    NEXT_LANG,
+    NEXT_FLUSHINTERVAL
+  } whatsnext;
+
   // argi inited above
   for (; argi<argc; argi++) {
     // "/org/lists.debian.org/lists/debian-project/2007/debian-project-200709"
     string fn(argv[argi]);
-    if (langnext) {
+    if (whatsnext == NEXT_LANG) {
       xapian_set_stemmer(fn);
       if (verbose != 0)
         cout << "language: " << fn << endl;
-      langnext = false;
+      whatsnext = NEXT_NOTHING;
       continue;
     }
+    else if (whatsnext == NEXT_FLUSHINTERVAL) {
+      flush_interval = atoll(fn.c_str());
+      if (verbose != 0)
+        cout << "flush interval: " << flush_interval << endl;
+      whatsnext = NEXT_NOTHING;
+      continue;
+    }
+    
     if (fn == "-v") {
       verbose += 1;
       continue;
     }
     if (fn == "-l") {
-      langnext = true;
+      whatsnext = NEXT_LANG;
       continue;
     }
-
+    if (fn == "-f") {
+      whatsnext = NEXT_FLUSHINTERVAL;
+      continue;
+    }
+    
     fh = open(fn.c_str(), O_RDONLY);
     string basename = fn.substr(fn.find_last_of('/')+1);
     xapian_open_db_for_month(basename);
@@ -162,7 +180,7 @@ int main(int argc, char** argv)
      
     g_mime_stream_unref(stream);
     close(fh);
-    if (unflushed_messages>10000) {
+    if (unflushed_messages>flush_interval) {
       if (verbose > 0)
         cout << endl << "flushing..." << flush;
       xapian_flush();
