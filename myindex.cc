@@ -34,6 +34,8 @@ int main(int argc, char** argv)
 
   size_t unflushed_messages = 0;
   size_t flush_interval = 100000;
+  bool regenerate = false;
+    
   int argi;
   for (argi = 1; (argi<argc) && (strcmp(argv[argi],"-v")==0); argi++) {
     verbose += 1;
@@ -86,10 +88,16 @@ int main(int argc, char** argv)
       whatsnext = NEXT_FLUSHINTERVAL;
       continue;
     }
+    if (fn == "-F") {
+      regenerate = true;
+      if (verbose > 0)
+        cout << "readding existing documents" << endl; 
+      continue;
+    }
     
     fh = open(fn.c_str(), O_RDONLY);
     string basename = fn.substr(fn.find_last_of('/')+1);
-    xapian_open_db_for_month(basename);
+    int lasthavemsgnum = xapian_open_db_for_month(basename, regenerate);
     int i = basename.find_last_of('-');
     string list = basename.substr(0,i);
     string yearmonth = basename.substr(i+1);
@@ -167,10 +175,12 @@ int main(int argc, char** argv)
           if (verbose > 0)
             cout << "." << flush;
           seenids.insert(msgid);
-          document * doc = parse_article(msg);
-          if (doc != NULL) {
-            xapian_add_document(doc, list, year, month, msgnum);
-            unflushed_messages++;
+          if ((msgnum > lasthavemsgnum) || regenerate) {
+            document * doc = parse_article(msg);
+            if (doc != NULL) {
+              xapian_add_document(doc, list, year, month, msgnum);
+              unflushed_messages++;
+            }
           }
           msgnum++;
         }

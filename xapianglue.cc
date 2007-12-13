@@ -245,14 +245,38 @@ xapian_init(void)
 
 static string curdb;
 
-void xapian_open_db_for_month(const string month) 
+long xapian_open_db_for_month(const string month, const bool deleteallexisting)
 {
   map<const string, size_t>::iterator i = monthtodbmap.find(month);
+  int maxmsgnum = -1;
   if (i != monthtodbmap.end()) {
     if (curdb != globbuf.gl_pathv[i->second]) {
       curdb = globbuf.gl_pathv[i->second];
       db = Xapian::WritableDatabase(curdb, Xapian::DB_CREATE_OR_OPEN);
     }    
+    if (! deleteallexisting) {
+      // get last message indexed, stupid duplication...
+      int i = month.find_last_of('-');
+      string prefix(string("Q")+month.substr(0,i)+month.substr(i+1));
+
+      if (verbose>=2)
+        cout << "looking for documents beginning with " << prefix << endl;
+    
+      for (Xapian::TermIterator ti = db.allterms_begin(prefix);
+           ti != db.allterms_end(prefix);
+           ti++) {
+        int msgnum = atoi((*ti).substr((*ti).length()-5).c_str());
+        if (msgnum>maxmsgnum)
+          maxmsgnum = msgnum;
+      }
+      if (verbose>=2)
+        cout << "have indexed " << month <<  " up to " << maxmsgnum << endl;
+    }
+    else {
+      if (verbose > 0)
+        cout << "deleting documents from " << month << endl;
+      db.delete_document(string("XM")+month);
+    }
     total_files = db.get_doccount();
   }
   else {
@@ -270,7 +294,8 @@ void xapian_open_db_for_month(const string month)
       if (total_files > INDEX_CHUNK_SIZE)
         counter++;
     }
-  }  
+  }
+  return maxmsgnum;
 }
 
 void xapian_set_stemmer(const string lang)
