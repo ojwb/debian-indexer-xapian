@@ -12,4 +12,4 @@ clean:
 	-rm myindex *.o
 
 myindex: $(OFILES)
-	gcc -g -o myindex $(LIBS) $(OFILES)
+	$(CC) -g -o myindex $(LIBS) $(OFILES)

@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # wrapper script for calling myindex with language specification etc.
 
+# TV-TODO: add creation of stub database!
 # Copyright (c) 2007 by Thomas Viehmann <tv@beamnet.de>
 
 # This program is free software; you can redistribute it and/or modify
@@ -15,13 +16,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import re
+import re, time
 
-cfgfile = '/org/lists.debian.org/cvsdata/.etc/lists.cfg'
+cfgfile = '/org/lists.debian.org/smartlist/.etc/lists.cfg'
 mboxdir = '/org/lists.debian.org/lists/'
 
 re_comment = re.compile('#.*')
 re_field = re.compile(r'^([a-zA-Z\-]+):\s*(\S*.*)')
+re_mbox = r'(?:/|^)([a-z0-9\-]+)/(?:(\d{4})/\1-\2\d{2}|\1-\d{4})$'
 
 def get_listinfo(cfgfile):
   li = {}
@@ -56,7 +58,7 @@ k = listinfo.keys()
 k.sort()
 
 # something is up with cdwrite, but never mind
-import glob, os
+import glob, os, sys
 
 def get_mboxes(ln):
   listdirs = (glob.glob(os.path.join(mboxdir,ln,ln+'-[0-9][0-9][0-9][0-9]'))
@@ -64,15 +66,49 @@ def get_mboxes(ln):
   listdirs.sort()
   return listdirs
 
-skip = ['debian-announce','debian-devel','debian-devel-announce',
-	'debian-devel-changes','debian-mentors','debian-project','debian-user']
+skip = [] # lists to skip
 
-startopts = ['myindex','-v']
+startopts = ['myindex']
+cmdlopts = sys.argv[1:]
+timestampfn = None
+dousage = False
+
+while cmdlopts and cmdlopts[0] in ['-F', '-v']:
+  startopts.append(cmdlopts.pop(0))
+if cmdlopts and cmdlopts[0] in ['--all','--timestamp']:
+  if ((cmdlopts[0]=='--all' and len(cmdlopts)>1) or
+      (cmdlopts[1]=='--timestamp' and len(cmdlopts)!=2)):
+    dousage = True
+  if cmdlopts[0]=='--timestamp':
+    timestampfn = cmdlopts[1]
+    thisruntimestamp = int(time.time())
+    lastruntimestamp = int(open(timestampfn).read().strip())
+  mboxestoindex = []
+  listdirs = glob.glob(os.path.join(mboxdir,'*'))
+  listdirs.sort()
+  for a in listdirs:
+    ln = os.path.basename(a)
+    mboxestoindex += get_mboxes(ln)
+  if timestampfn:
+    mboxestoindex = filter(lambda x: os.stat(x).st_mtime >= lastruntimestamp,
+                           mboxestoindex)
+elif cmdlopts:
+  mboxestoindex = cmdlopts
+else:
+  dousage = True
+if dousage:
+  print """usage: %s listmbox [listmbox ...]
+
+or     %s --all
+"""%(sys.argv[0],sys.argv[0])
+  sys.exit()
+
+lastlang = None
 opts = startopts[:]
-listdirs = glob.glob(os.path.join(mboxdir,'*'))
-listdirs.sort()
-for a in listdirs:
-  ln = os.path.basename(a)
+for anmbox in mboxestoindex:
+  bn = os.path.basename(anmbox)
+  ln, month = bn.rsplit('-',1)
+
   if ln not in listinfo:
     print ln,"not found, skipping"
   elif ln in skip:
@@ -81,12 +117,21 @@ for a in listdirs:
     print ln,"is in section",listinfo[ln]["section"]+", skipping"
   else:
     lang = get_lang(ln)
-    print "doing index for %s with lang %s..."%(ln,lang)
-    opts += ['-l',lang]+get_mboxes(ln)
+    #print "bn",bn,"ln",ln,"month",month,"lang",lang
+    #print "doing index for %s with lang %s..."%(ln,lang)
+    if lang != lastlang:
+      opts += ['-l',lang]
+      lastlang = lang
+    opts.append(anmbox)
   if len(opts)>1000:
-    print "calling %s"%(' '.join(opts))
-    os.spawnv(os.P_WAIT,'./myindex', opts)
+    #print "calling %s"%(' '.join(opts))
+    if os.spawnv(os.P_WAIT,'./myindex', opts):
+      raise Exception("myindex %s returned error"%' '.join(opts))
     opts = startopts[:]
+    lastlang = None
 
-print "calling %s"%(' '.join(opts))
-os.spawnv(os.P_WAIT,'./myindex', opts)
+#print "calling %s"%(' '.join(opts))
+if os.spawnv(os.P_WAIT,'./myindex', opts):
+  raise Exception("myindex %s returned error"%' '.join(opts))
+if timestampfn:
+  print >> open(timestampfn,"w"), thisruntimestamp
