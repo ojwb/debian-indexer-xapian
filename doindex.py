@@ -19,6 +19,7 @@
 import re, time
 
 cfgfile = '/org/lists.debian.org/smartlist/.etc/lists.cfg'
+deadcfgfile = '/org/lists.debian.org/smartlist/.etc/lists-dead.cfg'
 mboxdir = '/org/lists.debian.org/lists/'
 
 re_comment = re.compile('#.*')
@@ -44,7 +45,7 @@ def get_listinfo(cfgfile):
       li[listname][field] = value
   return li
 
-listinfo = get_listinfo('lists-dead.cfg')
+listinfo = get_listinfo(deadcfgfile)
 listinfo.update(get_listinfo(cfgfile))
 
 def get_lang(listname):
