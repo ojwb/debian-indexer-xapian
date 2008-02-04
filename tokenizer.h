@@ -25,6 +25,7 @@ typedef struct {
   std::string author;
   std::string email;
   std::string subject;
+  time_t date;
   char body[MAX_SAVED_BODY_LENGTH];
 } document;
 

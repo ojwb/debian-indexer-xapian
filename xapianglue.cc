@@ -27,7 +27,7 @@ string index_globmask("/org/lists.debian.org/xapian/data/listdb*");
 const char *index_dir = "/org/lists.debian.org/xapian/data/listdb"; // FIXME
 
 static int counter = 0;
-static string language("english");
+static string language, stemmer_language;
 
 
 extern "C" void
@@ -114,8 +114,8 @@ xapian_add_document(const document *d, std::string & list, int year, int month, 
 	}
     }
     indexer.index_text(d->subject, 3);
+    
     char buf[64];
-
     sprintf(buf, "%04d%02d%05d", year,month,msgnum);
     string ourxapid("Q");
     ourxapid += list;
@@ -123,19 +123,45 @@ xapian_add_document(const document *d, std::string & list, int year, int month, 
     doc->add_term(ourxapid);
     // G list
     // L language
+    // XSL language used for stemming
     // Q id
-    if (language.length()>0)
+    if (! language.empty())
       doc->add_term(string("L")+language);
+    if (! stemmer_language.empty())
+      doc->add_term(string("XSL")+stemmer_language);    
 
     if (month != 0)
       sprintf(buf, "%04d%02d", year,month);
     else
       sprintf(buf, "%04d", year);      
-    string datecode(buf);
-    doc->add_value(VALUE_DATECODE, datecode);
     doc->add_term((string("XM")+list+"-")+buf);
     
-    
+    struct tm ts;
+    memset(&ts, 0, sizeof(ts));
+    ts.tm_year = year-1900;
+    ts.tm_mon = (month != 0 ? month-1 : 0);
+    ts.tm_mday = 1;
+    time_t t = mktime(&ts);
+    if (d->date + 3*24*3600 >= t) {
+      // this works for monthly and yearly lists
+      ts.tm_year += (month%12)==0;
+      ts.tm_mon = (month%12);
+      t = mktime(&ts);
+      if (t + 3*24*3600 >= d->date) {
+        t = d->date;
+      }
+      else {
+        if (verbose > 0)
+          cerr << "date header out of bounds in message " << ourxapid << endl;        
+      }
+    }
+    else {
+      if (verbose > 0)
+        cerr << "date header out of bounds in message " << ourxapid << endl;
+    }
+    gmtime_r(&t, &ts);
+    strftime(buf, sizeof(buf), "%Y-%m-%d-%H-%m", &ts);
+    doc->add_value(VALUE_DATECODE, buf);
 
     if (month != 0) 
 	sprintf(buf, "/%04d/%02d/msg%05d.html", year,month, msgnum);
@@ -237,7 +263,7 @@ xapian_init(void)
 {
   try {
     init_monthtodbmap();
-    indexer.set_stemmer(Xapian::Stem("english")); // TV-TODO: do better
+    xapian_set_stemmer("en");
   } catch (const Xapian::Error &e) {
     merror(e.get_msg().c_str());
   }
@@ -304,17 +330,14 @@ void xapian_set_stemmer(const string lang)
     return;    
   }
   
-  try { 
-    string languages(" ");
-    languages += Xapian::Stem::get_available_languages();
-    languages += " ";
-    if ((lang.length() == 0) || (languages.find(lang) == string::npos)) {
-      indexer.set_stemmer(Xapian::Stem());
-      language = "";
-    }
-    else {
+  try {
+    language = lang;
+    try {
       indexer.set_stemmer(Xapian::Stem(lang));
-      language = lang;
+      stemmer_language = lang;
+    } catch (const Xapian::InvalidArgumentError &e) {
+      indexer.set_stemmer(Xapian::Stem());
+      stemmer_language.erase();
     }
   } catch (const Xapian::Error &e) {
     merror(e.get_msg().c_str());

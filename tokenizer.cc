@@ -391,13 +391,6 @@ document* parse_article(GMimeMessage* msg) {
 
   if (msg == 0) goto dontindex;
 
-  /* Skip messages marked to expire for now.
-   * FIXME: Later we might want to allow them to be searched for until they
-   * expire (add an "XX<date>" tag and purge articles with this tag at the
-   * end of each day...)
-   */
-  if (g_mime_message_get_header(msg, "X-Gmane-Expiry") != 0) goto dontindex;
-  
   {
     xapian_new_document();
     default_charset = NULL; // TV-TODO
@@ -458,6 +451,22 @@ document* parse_article(GMimeMessage* msg) {
 	    }
 	    // If the author is enclosed in (), <>, --, ==, etc remove them.
 	    while (!author.empty()) {
+                size_t i = 0;
+                size_t j;
+                while (((i = author.find("=?", i)) != string::npos) &&
+                       ((j = author.find("?=", i+1)) != string::npos)) {
+                  j = j-i+2;
+                  if (verbose > 1)
+                    cout << endl << "#BEFORE#" << author << endl;
+                  char *s = g_mime_utils_header_decode_text(author.substr(i,j).c_str());
+                  author.replace(i,j, s);
+                  free(s);
+                  if (verbose > 1)
+                    cout << "#AFTER#" << author << endl;
+                  i += j;
+                  pre = author;
+                }
+              
 		if (author[author.size() - 1] == ' ') {
 		    author.erase(author.size() - 1);
 		    continue;
@@ -557,6 +566,15 @@ document* parse_article(GMimeMessage* msg) {
     } else {
       doc.subject.erase();
     }
+
+    {
+      int gmt_offset;
+      g_mime_message_get_date(msg, &doc.date, &gmt_offset);
+      int i = (gmt_offset<0 ? -1 : 1);
+      gmt_offset *= i;
+      doc.date -= i*60*((gmt_offset/100*60)+(gmt_offset%100));
+    }
+    
 
     transform_part(msg->mime_part); 
 

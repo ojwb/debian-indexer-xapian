@@ -17,10 +17,53 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import re, time
+import glob, os, sys
 
 cfgfile = '/org/lists.debian.org/smartlist/.etc/lists.cfg'
 deadcfgfile = '/org/lists.debian.org/smartlist/.etc/lists-dead.cfg'
 mboxdir = '/org/lists.debian.org/lists/'
+
+# TV-COMMENT: This sucks. But is what is a good source?
+langcodes = {
+  "english":"en",
+  "arabic":"ar",
+  "bulgarian":"bg",
+  "catalan":"ca",
+  "czech":"cs",
+  "danish":"da",
+  "german":"de",
+  "greek":"el",
+  "esperanto":"eo",
+  "spanish":"es",
+  "finnish":"fi",
+  "french":"fr",
+  "croatian":"hr",
+  "hungarian":"hu",
+  "armenian":"hy",
+  "indonesian":"id",
+  "italian":"it",
+  "japanese":"ja",
+  "korean":"ko",
+  "lithuanian":"lt",
+  "dutch":"nl",
+  "norwegian":"no",
+  "persian":"fa",
+  "polish":"pl",
+  "portuguese":"pt",
+  "romanian":"ro",
+  "russian":"ru",
+  "slovak":"sk",
+  "swedish":"sv",
+  "slovene":"sl",
+  "tamil":"ta",
+  "turkish":"tr",
+  "ukrainian":"uk",
+  "chinese":"zh",
+  "galician":"gl",
+  "vietnamese":"vi",
+  "kannada":"kn",
+  "malayalam":"ml",
+  }
 
 re_comment = re.compile('#.*')
 re_field = re.compile(r'^([a-zA-Z\-]+):\s*(\S*.*)')
@@ -54,12 +97,16 @@ def get_lang(listname):
   lang = re.sub(r'[^a-z].*','',lang)
   if not lang:
     lang = 'english'
+  lang = langcodes.get(lang)
+  if not lang:
+    print >> sys.stderr, "Language code unknown for language '%s'"%(lang)
+    lang = 'english'
   return lang
+
 k = listinfo.keys()
 k.sort()
 
 # something is up with cdwrite, but never mind
-import glob, os, sys
 
 def get_mboxes(ln):
   listdirs = (glob.glob(os.path.join(mboxdir,ln,ln+'-[0-9][0-9][0-9][0-9]'))
