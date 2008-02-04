@@ -18,7 +18,6 @@
    a section of the matching article. */
 #define MAX_SAVED_BODY_LENGTH 340
 
-#ifdef __cplusplus
 #include <string>
 
 typedef struct {
@@ -33,14 +32,7 @@ document* parse_article(GMimeMessage* msg);
 
 //document* parse_article(FILE *fh, size_t len, time_t date, const char *email);
 
-extern "C" {
-#endif
-
 void tokenizer_init(void);
 void tokenizer_fini(void);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

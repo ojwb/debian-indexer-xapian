@@ -121,7 +121,9 @@ cmdlopts = sys.argv[1:]
 timestampfn = None
 dousage = False
 
-while cmdlopts and cmdlopts[0] in ['-F', '-v']:
+while cmdlopts and cmdlopts[0] in ['-F', '-v','--dbname']:
+  if cmdlopts[0] in ['--dbname']:
+    startopts.append(cmdlopts.pop(0))
   startopts.append(cmdlopts.pop(0))
 if cmdlopts and cmdlopts[0] in ['--all','--timestamp']:
   if ((cmdlopts[0]=='--all' and len(cmdlopts)>1) or

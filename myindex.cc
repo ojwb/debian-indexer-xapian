@@ -35,15 +35,25 @@ int main(int argc, char** argv)
   size_t unflushed_messages = 0;
   size_t flush_interval = 100000;
   bool regenerate = false;
+  char *dbpathprefix = NULL;
     
   int argi;
   for (argi = 1; (argi<argc) && (strcmp(argv[argi],"-v")==0); argi++) {
     verbose += 1;
   }
-  
+  if ((argi < argc) && (strcmp(argv[argi],"--dbname")==0)) {
+    ++argi;
+    if (argi < argc) {
+      dbpathprefix = argv[argi];
+      ++argi;
+    }
+    else {
+      cerr << "missing argument after --dbname" << endl;
+    }
+  }
 
   tokenizer_init();
-  xapian_init();
+  xapian_init(dbpathprefix);
   start_time = time(NULL);
 
   // g_mime_init(GMIME_INIT_FLAG_UTF8);
@@ -54,7 +64,8 @@ int main(int argc, char** argv)
   enum {
     NEXT_NOTHING = 0,
     NEXT_LANG,
-    NEXT_FLUSHINTERVAL
+    NEXT_FLUSHINTERVAL,
+    NEXT_DBNAME
   } whatsnext;
 
   // argi inited above

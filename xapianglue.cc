@@ -22,16 +22,12 @@ Xapian::WritableDatabase db;
 Xapian::Document * doc = NULL;
 Xapian::TermGenerator indexer;
 
-string index_globmask("/org/lists.debian.org/xapian/data/listdb*");
-
-const char *index_dir = "/org/lists.debian.org/xapian/data/listdb"; // FIXME
+static string dbpathprefix("/org/lists.debian.org/xapian/data/listdb");
 
 static int counter = 0;
 static string language, stemmer_language;
 
-
-extern "C" void
-xapian_flush(void)
+void xapian_flush(void)
 {
     try {
 	db.flush();
@@ -40,8 +36,7 @@ xapian_flush(void)
     }
 }
 
-extern "C" void
-xapian_new_document(void)
+void xapian_new_document(void)
 {
     if (doc != NULL)
 	delete doc;
@@ -53,8 +48,7 @@ xapian_new_document(void)
     }
 }
 
-extern "C" void
-xapian_tokenise(const char* prefix, const char* text, int len)
+void xapian_tokenise(const char* prefix, const char* text, int len)
 {
     if (doc == NULL) {
 	merror("xapian_tokenise called before xapian_new_document");
@@ -221,22 +215,12 @@ xapian_add_document(const document *d, std::string & list, int year, int month, 
     }
 }
 
-
-
-extern "C" char *index_file_name(char *name) {
-  static char file_name[1024];
-  strcpy(file_name, index_dir);
-  strcat(file_name, "/");
-  strcat(file_name, name);
-  return file_name;
-}
-
 map<const string, size_t> monthtodbmap;
 glob_t globbuf;
 
 void init_monthtodbmap()
 {
-  int res = glob(index_globmask.c_str(), 0, NULL, &globbuf);
+  int res = glob((dbpathprefix+"*").c_str(), 0, NULL, &globbuf);
   if (res==0) {
     for (size_t i=0; globbuf.gl_pathv[i] != NULL; i++) {
       if (verbose>0)
@@ -258,9 +242,12 @@ void init_monthtodbmap()
   }
 }
 
-extern "C" void
-xapian_init(void)
+void xapian_init(const char* adbpathprefix)
 {
+  if (adbpathprefix) {
+    dbpathprefix = adbpathprefix;
+  }
+  
   try {
     init_monthtodbmap();
     xapian_set_stemmer("en");
@@ -308,7 +295,7 @@ long xapian_open_db_for_month(const string month, const bool deleteallexisting)
   else {
     total_files = -1;
     while ((total_files < 0) or (total_files > INDEX_CHUNK_SIZE)) {
-      string dbpath(index_dir);
+      string dbpath(dbpathprefix);
       char buf[256];
       sprintf(buf, "-%03d", counter);
       dbpath += buf;
