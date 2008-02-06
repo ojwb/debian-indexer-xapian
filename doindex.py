@@ -127,7 +127,7 @@ while cmdlopts and cmdlopts[0] in ['-F', '-v','--dbname']:
   startopts.append(cmdlopts.pop(0))
 if cmdlopts and cmdlopts[0] in ['--all','--timestamp']:
   if ((cmdlopts[0]=='--all' and len(cmdlopts)>1) or
-      (cmdlopts[1]=='--timestamp' and len(cmdlopts)!=2)):
+      (cmdlopts[0]=='--timestamp' and len(cmdlopts)!=2)):
     dousage = True
   if cmdlopts[0]=='--timestamp':
     timestampfn = cmdlopts[1]
