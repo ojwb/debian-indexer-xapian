@@ -458,7 +458,11 @@ document* parse_article(GMimeMessage* msg) {
                   j = j-i+2;
                   if (verbose > 1)
                     cout << endl << "#BEFORE#" << author << endl;
-                  char *s = g_mime_utils_header_decode_text(author.substr(i,j).c_str());
+                  char *s = g_mime_utils_header_decode_text(
+#ifdef OLDGMIME
+                    (const unsigned char*)
+#endif
+                    author.substr(i,j).c_str());
                   author.replace(i,j, s);
                   free(s);
                   if (verbose > 1)

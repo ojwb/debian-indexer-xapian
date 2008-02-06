@@ -5,7 +5,9 @@ LIBS += $(shell xapian-config --libs)
 LIBS += -lgcrypt
 CXXFILES = xapianglue myindex tokenizer util
 OFILES = $(CFILES:=.o) $(CXXFILES:=.o)
-
+ifeq ($(shell dpkg --compare-versions $$(gmime-config --version) lt 2.2.7 && echo yes), yes)
+  CPPFLAGS += -DOLDGMIME
+endif
 all: myindex
 
 clean:
