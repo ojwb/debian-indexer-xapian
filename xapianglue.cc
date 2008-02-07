@@ -154,7 +154,7 @@ xapian_add_document(const document *d, std::string & list, int year, int month, 
         cerr << "date header out of bounds in message " << ourxapid << endl;
     }
     gmtime_r(&t, &ts);
-    strftime(buf, sizeof(buf), "%Y-%m-%d-%H-%m", &ts);
+    strftime(buf, sizeof(buf), "%Y-%m-%d-%H-%M", &ts);
     doc->add_value(VALUE_DATECODE, buf);
 
     if (month != 0) 
