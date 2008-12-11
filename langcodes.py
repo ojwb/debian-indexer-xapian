@@ -7,6 +7,8 @@ import os
 langcodes = {
   "english":"en",
   "arabic":"ar",
+  "basque":"eu",
+  "belarusian":"be",
   "bulgarian":"bg",
   "catalan":"ca",
   "czech":"cs",

@@ -27,6 +27,8 @@ mboxdir = '/org/lists.debian.org/lists/'
 langcodes = {
   "english":"en",
   "arabic":"ar",
+  "basque":"eu",
+  "belarusian":"be",
   "bulgarian":"bg",
   "catalan":"ca",
   "czech":"cs",
@@ -99,7 +101,7 @@ def get_lang(listname):
     lang = 'english'
   lang = langcodes.get(lang)
   if not lang:
-    print >> sys.stderr, "Language code unknown for language '%s'"%(lang)
+    print >> sys.stderr, "Language code unknown for language '%s' of list '%s'"%(lang,listname)
     lang = 'english'
   return lang
 
