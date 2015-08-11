@@ -199,7 +199,7 @@ int main(int argc, char** argv)
       } 
     }
      
-    g_mime_stream_unref(stream);
+    g_object_unref(stream);
     close(fh);
     if (unflushed_messages>flush_interval) {
       if (verbose > 0)

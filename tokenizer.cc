@@ -371,10 +371,10 @@ static void transform_message_rfc822(const char *content) {
   parser = g_mime_parser_new_with_stream(stream);
   msg = g_mime_parser_construct_message(parser);
   g_object_unref(parser);
-  g_mime_stream_unref(stream);
+  g_object_unref(stream);
   if (msg != 0) {
     transform_part(msg->mime_part); 
-    g_mime_object_unref(GMIME_OBJECT(msg));
+    g_object_unref(msg);
   }
 }
 
@@ -515,7 +515,7 @@ document* parse_article(GMimeMessage* msg) {
 		    doc.email.resize(doc.email.size() - 1);
 		}
 	    }
-	    internet_address_list_destroy(iaddr_list);
+	    g_object_unref(iaddr_list);
 	} else {
             if (verbose > 0)
               cout << "Failed to parse From: " << name << endl;
@@ -578,14 +578,14 @@ document* parse_article(GMimeMessage* msg) {
 
     transform_part(msg->mime_part); 
 
-    // g_mime_object_unref(GMIME_OBJECT(msg));
+    // g_object_unref(msg);
   }  
   doc.body[doc_body_length] = '\0';
 
   return &doc;
 
 dontindex:
-  // if (msg) g_mime_object_unref(GMIME_OBJECT(msg));   
+  // if (msg) g_object_unref(msg);
   return NULL;
 }
 
