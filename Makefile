@@ -13,4 +13,4 @@ clean:
 	-rm -f myindex *.o
 
 myindex: $(OFILES)
-	$(CC) -g -o myindex $(LIBS) $(OFILES)
+	$(CXX) -g -o myindex $(LIBS) $(OFILES)
