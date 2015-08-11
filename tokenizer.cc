@@ -204,7 +204,6 @@ static char *convert_to_utf8(const char *string, size_t len, const char *charset
 static void transform_simple_part(GMimePart* part) {
 //    fprintf(stderr, "transform_simple_part\n");
   GMimeContentType* ct = 0;
-  const gchar* content = 0;
   int i = 0;
   char content_type[128];
   const char *part_type;
@@ -386,7 +385,6 @@ int counter = 0;
 //document* parse_article(FILE *fh, size_t len, time_t date, const char *email);
 document* parse_article(GMimeMessage* msg) {
   //GMimeMessage *msg = 0;
-  const char *xref;
 
   tallied_length = 0;
 

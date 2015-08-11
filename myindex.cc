@@ -65,7 +65,7 @@ int main(int argc, char** argv)
     NEXT_LANG,
     NEXT_FLUSHINTERVAL,
     NEXT_DBNAME
-  } whatsnext;
+  } whatsnext = NEXT_NOTHING;
 
   // argi inited above
   for (; argi<argc; argi++) {

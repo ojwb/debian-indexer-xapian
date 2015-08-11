@@ -39,12 +39,11 @@ string fake_msgid(GMimeMessage* msg)
    }
    gcry_md_open(&md5, GCRY_MD_MD5,0);
    char* headers = g_mime_object_get_headers(GMIME_OBJECT(msg));
-   size_t l = strlen(headers);
    gcry_md_write(md5,headers,strlen(headers)); /*<-- this should create the checksum*/
    free(headers);
    gcry_md_final( md5 );
    unsigned char *digest = gcry_md_read( md5, GCRY_MD_MD5 );
-   for (int i=0; i<gcry_md_get_algo_dlen( GCRY_MD_MD5 ); i++ ) {
+   for (unsigned i=0; i<gcry_md_get_algo_dlen( GCRY_MD_MD5 ); i++ ) {
       res += hexchars[digest[i] >> 4];
       res += hexchars[digest[i] & 0xF];
    }
