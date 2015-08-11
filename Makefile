@@ -10,7 +10,7 @@ OFILES = $(CFILES:=.o) $(CXXFILES:=.o)
 all: myindex
 
 clean:
-	-rm myindex *.o
+	-rm -f myindex *.o
 
 myindex: $(OFILES)
 	$(CC) -g -o myindex $(LIBS) $(OFILES)
