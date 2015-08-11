@@ -116,7 +116,7 @@ def get_mboxes(ln):
   listdirs.sort()
   return listdirs
 
-skip = [] # lists to skip
+skip = ['cdwrite'] # lists to skip
 
 startopts = ['myindex']
 cmdlopts = sys.argv[1:]

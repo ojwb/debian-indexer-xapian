@@ -35,6 +35,7 @@ langcodes = {
   "romanian":"ro",
   "russian":"ru",
   "slovak":"sk",
+  "serbian":"sr",
   "swedish":"sv",
   "slovene":"sl",
   "tamil":"ta",
@@ -45,6 +46,7 @@ langcodes = {
   "vietnamese":"vi",
   "kannada":"kn",
   "malayalam":"ml",
+  "sicilian":"it",
   }
 
 ls = langcodes.keys()

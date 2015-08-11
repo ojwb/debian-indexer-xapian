@@ -132,7 +132,7 @@ static void transform_text_plain(const char *content) {
   if (content == NULL) return;
   if (strncmp(content, "-----BEGIN PGP SIGNED MESSAGE-----", 34) == 0) {
       /* No need to unquote lines - the indexing will just ignore it */
-      char *s;
+      const char *s;
       content += 34;
       s = strstr(content, "\n\n");
       if (s != NULL) content = s + 2;
