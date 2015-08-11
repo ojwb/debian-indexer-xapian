@@ -56,7 +56,6 @@ int main(int argc, char** argv)
   xapian_init(dbpathprefix);
   start_time = time(NULL);
 
-  // g_mime_init(GMIME_INIT_FLAG_UTF8);
   // cout << argc << "  args" << endl;
   set<string> spamids;
   set<string> seenids;
