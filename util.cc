@@ -38,7 +38,7 @@ string fake_msgid(GMimeMessage* msg)
       have_inited_gnutls = true;
    }
    gcry_md_open(&md5, GCRY_MD_MD5,0);
-   char* headers = g_mime_message_get_headers(msg);
+   char* headers = g_mime_object_get_headers(GMIME_OBJECT(msg));
    size_t l = strlen(headers);
    gcry_md_write(md5,headers,strlen(headers)); /*<-- this should create the checksum*/
    free(headers);

@@ -158,7 +158,7 @@ int main(int argc, char** argv)
     while (! g_mime_parser_eos(parser)) {
       msg = g_mime_parser_construct_message(parser);
       if (msg != 0) {
-        const char* raw_msgid = g_mime_message_get_header(msg, "Message-Id");
+        const char* raw_msgid = g_mime_object_get_header(GMIME_OBJECT(msg), "Message-Id");
         string msgid;
         if (raw_msgid != NULL)
           msgid = msgid_strip(raw_msgid);
