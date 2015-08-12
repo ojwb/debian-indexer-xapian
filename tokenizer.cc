@@ -266,9 +266,9 @@ static void transform_simple_part(GMimePart* part) {
     }
   }
 
-  g_byte_array_unref(byte_array);
+  if (use_content != ccontent)
+    free(use_content);
   g_object_unref(out);
-  g_object_unref(data);
 }
 
 static void transform_part(GMimeObject *mime_part);
