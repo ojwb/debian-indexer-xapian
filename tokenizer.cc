@@ -358,7 +358,6 @@ static void transform_part(GMimeObject *mime_part) {
     GMimeMessagePart * msgpart = GMIME_MESSAGE_PART(mime_part);
     GMimeMessage * msg = g_mime_message_part_get_message(msgpart);
     transform_part(msg->mime_part);
-    g_object_unref(msg);
   } else if (mime_part != NULL) {
     fprintf(stderr, "part is type %s\n", g_type_name(G_TYPE_FROM_INSTANCE(mime_part)));
   }
