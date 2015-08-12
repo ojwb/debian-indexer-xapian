@@ -187,15 +187,15 @@ static struct transform part_transforms[] = {
   {"message/rfc822", transform_message_rfc822},
   {NULL, NULL}};
 
-static char *convert_to_utf8(const char *string, const char *charset) {
+static char *convert_to_utf8(const char *string, size_t len, const char *charset) {
   const char *utf8, *local;
   iconv_t local_to_utf8;
   char *result;
 
-  utf8 = g_mime_charset_name("utf-8");
-  local = g_mime_charset_name(charset);
+  utf8 = g_mime_charset_iconv_name("utf-8");
+  local = g_mime_charset_iconv_name(charset);
   local_to_utf8 = g_mime_iconv_open(utf8, local);
-  result = g_mime_iconv_strdup(local_to_utf8, string);
+  result = g_mime_iconv_strndup(local_to_utf8, string, len);
   g_mime_iconv_close(local_to_utf8);
 
   return result;
@@ -203,16 +203,14 @@ static char *convert_to_utf8(const char *string, const char *charset) {
 
 static void transform_simple_part(GMimePart* part) {
 //    fprintf(stderr, "transform_simple_part\n");
-  const GMimeContentType* ct = 0;
-  const gchar* content = 0;
-  size_t contentLen = 0;
+  GMimeContentType* ct = 0;
   int i = 0;
   char content_type[128];
   const char *part_type;
-  char *mcontent, *p, *ccontent = NULL, *use_content;
+  char *p, *use_content = NULL;
   const char *charset = NULL;
 
-  ct = g_mime_part_get_content_type(part);
+  ct = g_mime_object_get_content_type(GMIME_OBJECT(part));
 
   if (ct == NULL ||
       ct->type == NULL ||
@@ -231,21 +229,30 @@ static void transform_simple_part(GMimePart* part) {
   for (p = content_type; *p; p++) 
     *p = tolower(*p);
 
-  content = g_mime_part_get_content(part, &contentLen);
-  /* We copy over the content and zero-terminate it. */
-  mcontent = (char *)malloc(contentLen + 1);
-  memcpy(mcontent, content, contentLen);
-  *(mcontent + contentLen) = 0;
+  GMimeStream * out = g_mime_stream_mem_new();
+  GMimeDataWrapper * data = g_mime_part_get_content_object(part);
+  if (g_mime_data_wrapper_write_to_stream(data, out) < 0) {
+    /* FIXME: How best to handle? */
+    g_object_unref(out);
+    g_object_unref(data);
+    return;
+  }
 
-  /* Convert contents to utf-8.  If the conversion wasn't successful,
-     we use the original contents. */
-  if (strcmp(charset, "utf-8")) 
-    ccontent = convert_to_utf8(mcontent, charset);
+  GByteArray * byte_array = g_mime_stream_mem_get_byte_array((GMimeStreamMem*)out);
+  char * ccontent = (char*)byte_array->data;
 
-  if (ccontent != NULL)
+  /* Convert contents to utf-8.  If the contents are already
+   * utf-8 or the conversion wasn't successful, we use the
+   * original contents. */
+  if (strcmp(charset, "utf-8") != 0) {
+    use_content = convert_to_utf8(ccontent, byte_array->len, charset);
+  }
+
+  if (use_content == NULL) {
+    // Nul-terminate.
+    g_mime_stream_write(out, "", 1);
     use_content = ccontent;
-  else
-    use_content = mcontent;
+  }
 
   for (i = 0; ; i++) {
     if ((part_type = part_transforms[i].content_type) == NULL) {
@@ -259,9 +266,9 @@ static void transform_simple_part(GMimePart* part) {
     }
   }
 
-  free(mcontent);
-  if (ccontent != NULL)
-    free(ccontent);
+  if (use_content != ccontent)
+    free(use_content);
+  g_object_unref(out);
 }
 
 static void transform_part(GMimeObject *mime_part);
@@ -269,7 +276,6 @@ static void transform_part(GMimeObject *mime_part);
 static void
 transform_multipart(GMimeMultipart *mime_part, const GMimeContentType * ct) {
 //    fprintf(stderr, "transform_multipart\n");
-  GList *child;
   GMimeObject *preferred = NULL;
   const char *type, *subtype = NULL;
 
@@ -284,9 +290,10 @@ transform_multipart(GMimeMultipart *mime_part, const GMimeContentType * ct) {
     /* This is multipart/alternative, so we need to decide which
        part to output. */
       
-    child = mime_part->subparts;
-    while (child) {
-      ct = g_mime_object_get_content_type((GMimeObject*)child->data);
+    int num_subparts = g_mime_multipart_get_count(mime_part);
+    for (int i = 0; i < num_subparts; ++i) {
+      GMimeObject * child = g_mime_multipart_get_part(mime_part, i);
+      ct = g_mime_object_get_content_type(child);
       if (ct == NULL) {
 	type = "text";
 	subtype = "plain";
@@ -298,23 +305,18 @@ transform_multipart(GMimeMultipart *mime_part, const GMimeContentType * ct) {
 	  
       if (! strcmp(type, "multipart") ||
 	  ! strcmp(type, "message")) 
-	preferred = (GMimeObject*)child->data;
+	preferred = child;
       else if (! strcmp(type, "text")) {
 	if (! strcmp(subtype, "html"))
-	  preferred = (GMimeObject*)child->data;
+	  preferred = child;
 	else if (! strcmp(subtype, "plain") && preferred == NULL)
-	  preferred = (GMimeObject*)child->data;
+	  preferred = child;
       }
-      child = child->next;
     }
 
     if (! preferred) {
       /* Use the last child as the preferred. */
-      child = mime_part->subparts;
-      while (child) {
-	preferred = (GMimeObject*)child->data;
-	child = child->next;
-      }
+      preferred = g_mime_multipart_get_part(mime_part, num_subparts - 1);
     }
 
     transform_part(preferred);
@@ -322,24 +324,24 @@ transform_multipart(GMimeMultipart *mime_part, const GMimeContentType * ct) {
   } else if (! strcmp(subtype, "digest")) {
     /* multipart/digest message. */
     GMimeContentType * ct;
-    child = mime_part->subparts;
-    while (child) {
-      if (GMIME_IS_PART(child->data)) {
+    int num_subparts = g_mime_multipart_get_count(mime_part);
+    for (int i = 0; i < num_subparts; ++i) {
+      GMimeObject * child = g_mime_multipart_get_part(mime_part, i);
+      if (GMIME_IS_PART(child)) {
 //	  fprintf(stderr, "digest part\n");
 	ct = g_mime_content_type_new("message", "rfc822");
-	g_mime_part_set_content_type(GMIME_PART(child->data), ct);
-	transform_part((GMimeObject *) child->data);
+	g_mime_object_set_content_type(GMIME_OBJECT(child), ct);
+	transform_part(child);
       } else {
 //	  fprintf(stderr, "multipart/digest subpart isn't a GMimePart?!\n");
       }
-      child = child->next;
     }
   } else {
     /* Multipart mixed and related. */
-    child = mime_part->subparts;
-    while (child) {
-      transform_part((GMimeObject *) child->data);
-      child = child->next;
+    int num_subparts = g_mime_multipart_get_count(mime_part);
+    for (int i = 0; i < num_subparts; ++i) {
+      GMimeObject * child = g_mime_multipart_get_part(mime_part, i);
+      transform_part(child);
     }
   }
 }
@@ -371,10 +373,10 @@ static void transform_message_rfc822(const char *content) {
   parser = g_mime_parser_new_with_stream(stream);
   msg = g_mime_parser_construct_message(parser);
   g_object_unref(parser);
-  g_mime_stream_unref(stream);
+  g_object_unref(stream);
   if (msg != 0) {
     transform_part(msg->mime_part); 
-    g_mime_object_unref(GMIME_OBJECT(msg));
+    g_object_unref(msg);
   }
 }
 
@@ -383,7 +385,6 @@ int counter = 0;
 //document* parse_article(FILE *fh, size_t len, time_t date, const char *email);
 document* parse_article(GMimeMessage* msg) {
   //GMimeMessage *msg = 0;
-  const char *xref;
 
   tallied_length = 0;
 
@@ -440,8 +441,11 @@ document* parse_article(GMimeMessage* msg) {
 
 	string author;
 	InternetAddressList *iaddr_list;
-	if ((iaddr_list = internet_address_parse_string(name.c_str())) != NULL) {
-	    InternetAddress *iaddr = iaddr_list->address;
+	if ((iaddr_list = internet_address_list_parse_string(name.c_str())) != NULL &&
+	    internet_address_list_length(iaddr_list) > 0) {
+	    /* FIXME: Just look at the first address for now */
+	    InternetAddress *iaddr = internet_address_list_get_address(iaddr_list, 0);
+
 	    if (iaddr->name) author = iaddr->name;
 
 	    string pre = author;
@@ -458,11 +462,7 @@ document* parse_article(GMimeMessage* msg) {
                   j = j-i+2;
                   if (verbose > 1)
                     cout << endl << "#BEFORE#" << author << endl;
-                  char *s = g_mime_utils_header_decode_text(
-#ifdef OLDGMIME
-                    (const unsigned char*)
-#endif
-                    author.substr(i,j).c_str());
+                  char *s = g_mime_utils_header_decode_text(author.substr(i,j).c_str());
                   author.replace(i,j, s);
                   free(s);
                   if (verbose > 1)
@@ -500,8 +500,8 @@ document* parse_article(GMimeMessage* msg) {
 		doc.author.erase();
 	    }
 
-	    if (iaddr->type == INTERNET_ADDRESS_NAME) {
-		doc.email = iaddr->value.addr;
+	    if (INTERNET_ADDRESS_IS_MAILBOX(iaddr)) {
+		doc.email = INTERNET_ADDRESS_MAILBOX(iaddr)->addr;
 		if (doc.email.size() > 21 &&
 		    doc.email.substr(doc.email.size() - 17) == "@public.gmane.org") {
 		    doc.email.resize(doc.email.size() - 16);
@@ -519,7 +519,7 @@ document* parse_article(GMimeMessage* msg) {
 		    doc.email.resize(doc.email.size() - 1);
 		}
 	    }
-	    internet_address_list_destroy(iaddr_list);
+	    g_object_unref(iaddr_list);
 	} else {
             if (verbose > 0)
               cout << "Failed to parse From: " << name << endl;
@@ -582,19 +582,19 @@ document* parse_article(GMimeMessage* msg) {
 
     transform_part(msg->mime_part); 
 
-    // g_mime_object_unref(GMIME_OBJECT(msg));
+    // g_object_unref(msg);
   }  
   doc.body[doc_body_length] = '\0';
 
   return &doc;
 
 dontindex:
-  // if (msg) g_mime_object_unref(GMIME_OBJECT(msg));   
+  // if (msg) g_object_unref(msg);
   return NULL;
 }
 
 void tokenizer_init(void) {
-  g_mime_init(GMIME_INIT_FLAG_UTF8);
+  g_mime_init(GMIME_ENABLE_RFC2047_WORKAROUNDS);
 }
 
 void tokenizer_fini(void) {

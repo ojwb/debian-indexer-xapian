@@ -56,7 +56,6 @@ int main(int argc, char** argv)
   xapian_init(dbpathprefix);
   start_time = time(NULL);
 
-  // g_mime_init(GMIME_INIT_FLAG_UTF8);
   // cout << argc << "  args" << endl;
   set<string> spamids;
   set<string> seenids;
@@ -66,7 +65,7 @@ int main(int argc, char** argv)
     NEXT_LANG,
     NEXT_FLUSHINTERVAL,
     NEXT_DBNAME
-  } whatsnext;
+  } whatsnext = NEXT_NOTHING;
 
   // argi inited above
   for (; argi<argc; argi++) {
@@ -158,7 +157,7 @@ int main(int argc, char** argv)
     while (! g_mime_parser_eos(parser)) {
       msg = g_mime_parser_construct_message(parser);
       if (msg != 0) {
-        const char* raw_msgid = g_mime_message_get_header(msg, "Message-Id");
+        const char* raw_msgid = g_mime_object_get_header(GMIME_OBJECT(msg), "Message-Id");
         string msgid;
         if (raw_msgid != NULL)
           msgid = msgid_strip(raw_msgid);
@@ -199,7 +198,8 @@ int main(int argc, char** argv)
       } 
     }
      
-    g_mime_stream_unref(stream);
+    g_object_unref(parser);
+    g_object_unref(stream);
     close(fh);
     if (unflushed_messages>flush_interval) {
       if (verbose > 0)

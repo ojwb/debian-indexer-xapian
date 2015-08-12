@@ -5,12 +5,12 @@ LIBS += $(shell xapian-config --libs)
 LIBS += -lgcrypt
 CXXFILES = xapianglue myindex tokenizer util
 OFILES = $(CFILES:=.o) $(CXXFILES:=.o)
-  CPPFLAGS += -DOLDGMIME
+CXXFLAGS = -Wall -W -O2 -g
 
 all: myindex
 
 clean:
-	-rm myindex *.o
+	-rm -f myindex *.o
 
 myindex: $(OFILES)
-	$(CC) -g -o myindex $(LIBS) $(OFILES)
+	$(CXX) -g -o myindex $(LIBS) $(OFILES)
