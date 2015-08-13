@@ -4,6 +4,7 @@ $set{fieldnames,$split{url list msgno year month subject author email sample}}
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 $set{thousand,$.}$set{decimal,.}$setmap{BN,,Any Country,uk,England,fr,France}
+$setmap{boolprefix,list,G}
 $def{PREV,$if{$ne{$topdoc,0},<input type="submit" name="&lt;" value="Previous" />}}
 $def{PAGE,<input type="submit" name="[" value="$1" />}
 $def{SPAGE,<input type="submit" name="[" value="$1" disabled="disabled" />}
