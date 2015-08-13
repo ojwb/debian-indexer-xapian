@@ -10,7 +10,7 @@ $def{PAGE,<input type="submit" name="[" value="$1" />}
 $def{SPAGE,<input type="submit" name="[" value="$1" disabled="disabled" />}
 $def{NEXT,$if{$ne{$last,$msize},<input type="submit" name="&gt;" value="Next" />}}
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <link rev="made" href="mailto:listarchives@debian.org" />
   <meta name="Author" content="Debian lists archives staff, listarchives@debian.org" />
   <link rel="stylesheet" href="/debian.css" type="text/css" />
