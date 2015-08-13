@@ -68,9 +68,11 @@ $list{$map{$filterterms{G},<option value="G$substr{$_,1}"$if{$find{$cgilist{B},$
 </p>
 <p>
 Sort by:
-<input type="radio" name="sort" value="relevance" $if{$or{$not{$cgi{sort}},$eq{$cgi{sort},relevance}},checked="checked"} />Relevance
-<input type="radio" name="sort" value="date" $if{$eq{$cgi{sort},date},checked="checked"} />Date
-<input type="radio" name="sort" value="revdate" $if{$eq{$cgi{sort},revdate},checked="checked"} />Age
+<input type="radio" name="SORT" value="" $if{$eq{$cgi{SORT},},checked="checked"} />Relevance
+<input type="radio" name="SORT" value="0" $if{$eq{$cgi{SORT},0},checked="checked"} />Date
+${ FIXME: we need to pass SORT=0&SORTREVERSE=1 which I can't see how to achieve without JS
+<input type="radio" name="SORT" value="0" $if{$eq{$cgi{SORT},0},checked="checked"} />Age
+}
 </p>
 <p>
 Hits per page:
