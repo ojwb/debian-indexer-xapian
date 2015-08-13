@@ -55,16 +55,16 @@ Search for: <input name="P" value="$html{$query}" size="65" /><br />
 <input type="radio" name="DEFAULTOP" value="and" $if{$eq{$defaultop,and},checked="checked"} /> Matching all words
 &nbsp;&nbsp;&nbsp;&nbsp;<a style="font-size: small;" href="http://wiki.debian.org/DebianMailingLists/SearchHowto">Syntax help</a>
 </p>
-${ FIXME: author and list filters not working currently
+${ FIXME: author filter not working currently
 <p>
 Author: <input type="text" name="author" size="40" value="$html{$cgi{author}}" />
 </p>
+}
 <p>Search lists:<br />
-<select name="list" size="5" multiple="multiple">
-$list{$map{$filterterms{G},<option value="$substr{$_,1}" $if{$find{$cgilist{list},$substr{$_,1}},selected="selected"}>$html{$if{$eq{$substr{$_,1,7},debian-},$substr{$_,8},$substr{$_,1}}}},,</option>,</option>}
+<select name="B" size="5" multiple="multiple">
+$list{$map{$filterterms{G},<option value="G$substr{$_,1}"$if{$find{$cgilist{B},$_}, selected="selected"}>$html{$if{$eq{$substr{$_,1,7},debian-},$substr{$_,8},$substr{$_,1}}}},,</option>,</option>}
 </select>
 </p>
-}
 <p>
 Sort by:
 <input type="radio" name="sort" value="relevance" $if{$or{$not{$cgi{sort}},$eq{$cgi{sort},relevance}},checked="checked"} />Relevance
