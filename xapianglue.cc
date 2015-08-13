@@ -91,7 +91,7 @@ xapian_add_document(const document *d, std::string & list, int year, int month, 
 {
     if (doc == NULL)
 	merror("xapian_add_document called before xapian_new_document");
-    doc->add_term( string("G")+list);
+    doc->add_boolean_term( string("G")+list);
     
     if (!d->email.empty()) {
 	try {
@@ -116,21 +116,21 @@ xapian_add_document(const document *d, std::string & list, int year, int month, 
     string ourxapid("Q");
     ourxapid += list;
     ourxapid += buf;
-    doc->add_term(ourxapid);
+    doc->add_boolean_term(ourxapid);
     // G list
     // L language
     // XSL language used for stemming
     // Q id
     if (! language.empty())
-      doc->add_term(string("L")+language);
+      doc->add_boolean_term(string("L")+language);
     if (! stemmer_language.empty())
-      doc->add_term(string("XSL")+stemmer_language);    
+      doc->add_boolean_term(string("XSL")+stemmer_language);
 
     if (month != 0)
       sprintf(buf, "%04d%02d", year,month);
     else
       sprintf(buf, "%04d", year);      
-    doc->add_term((string("XM")+list+"-")+buf);
+    doc->add_boolean_term((string("XM")+list+"-")+buf);
     
     struct tm ts;
     memset(&ts, 0, sizeof(ts));
