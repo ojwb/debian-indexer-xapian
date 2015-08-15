@@ -167,13 +167,13 @@ $NEXT
 <br />
 $if{$ne{$topdoc,0},<input type="hidden" name="TOPDOC" value="$topdoc" />}
 $if{$queryterms,<input TYPE=hidden name=xP value="$html{$queryterms}">}
+<input TYPE=hidden name=xFILTERS value="$html{$filters}">
 ${
 $if{$dbname,<input TYPE=hidden name=DB value="$html{$dbname}">}
 $if{$fmt,<input TYPE=hidden name=FMT value="$html{$fmt}">}
 $if{$ne{$hitsperpage,10},<input TYPE=hidden name=HITSPERPAGE value=$hitsperpage>}
 $if{$cgi{COLLAPSE},<input TYPE=hidden name=COLLAPSE value="$html{$cgi{COLLAPSE}}">}
 <input TYPE=hidden name=xDB value="$html{$dbname}">
-<input TYPE=hidden name=xFILTERS value="$html{$filters}">
 $list{$relevants,<input TYPE=hidden name=R value=",.,">}
 $if{$cgi{THRESHOLD},<input TYPE=hidden name=THRESHOLD value="$html{$cgi{THRESHOLD}}">}
 ${Preserve any B filters used - this needs modifying if you modify this template
