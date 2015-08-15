@@ -277,14 +277,14 @@ See <a href="https://www.debian.org/license">license terms</a> and
 <!--/UdmComment-->
 </div> <!-- end footermap -->
 <div id="fineprint">
-  <p><small>You may <a href="http://www.debian.org/Bugs/Reporting">submit bugs</a>
+  <p><small>You may <a href="https://www.debian.org/Bugs/Reporting">submit bugs</a>
   against the list archives using the
-  <a href="http://bugs.debian.org/lists.debian.org"><var>lists.debian.org</var>
+  <a href="https://bugs.debian.org/lists.debian.org"><var>lists.debian.org</var>
   pseudo-package</a> or contact the maintainer at
   <a href="mailto:listmaster@lists.debian.org">listmaster@lists.debian.org</a>.
   </small></p>
 
-  <p><small>See the Debian <a href="http://www.debian.org/contact">contact
+  <p><small>See the Debian <a href="https://www.debian.org/contact">contact
   page</a> for further information on contacting us.</small></p>
 
 <p>
