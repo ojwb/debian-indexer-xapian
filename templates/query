@@ -1,0 +1,303 @@
+$httpheader{Content-Type,text/html; charset=utf-8}
+$set{stemmer,$cgi{language}}
+$set{fieldnames,$split{url list msgno year month subject author email sample}}
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+$set{thousand,$.}$set{decimal,.}$setmap{BN,,Any Country,uk,England,fr,France}
+$setmap{boolprefix,list,G}
+$def{PREV,$if{$ne{$topdoc,0},<input type="submit" name="&lt;" value="Previous" />}}
+$def{PAGE,<input type="submit" name="[" value="$1" />}
+$def{SPAGE,<input type="submit" name="[" value="$1" disabled="disabled" />}
+$def{NEXT,$if{$ne{$last,$msize},<input type="submit" name="&gt;" value="Next" />}}
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <link rev="made" href="mailto:listarchives@debian.org" />
+  <meta name="Author" content="Debian lists archives staff, listarchives@debian.org" />
+  <link rel="stylesheet" href="/debian.css" type="text/css" />
+<title>$if{$query,Debian List Search: $html{$query},Debian List Search}</title>
+</head>
+<body text="#000000" bgcolor="#FFFFFF" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<div id="header">
+	<div id="upperheader">
+   		<div id="logo">
+      			<a href="https://www.debian.org" title="Debian Home"><img src="/Pics/openlogo-50.png" alt="Debian" width="50" height="61" /></a>
+	  	</div> <!-- end logo -->
+  		<p class="section"><a href="/">mailing lists</a></p>
+	</div> <!-- end upperheader -->
+<!--UdmComment-->
+	<div id="navbar">
+		<p class="hidecss"><a href="#inner">Skip Quicknav</a></p>
+		<ul>
+			<li><a href="https://www.debian.org/intro/about">About Debian</a></li>
+			<li><a href="https://www.debian.org/distrib/">Getting Debian</a></li>
+			<li><a href="https://www.debian.org/support">Support</a></li>
+			<li><a href="https://www.debian.org/devel/">Developers'&nbsp;Corner</a></li>
+		</ul>
+	</div> <!-- end navbar -->
+	<p id="breadcrumbs"><a href="/">Mailing Lists</a> / search </p>
+</div> <!-- end header -->
+<div id="content">
+	<div class="index_include">
+<h1>Debian Mailing Lists</h1>
+
+
+
+$if{$not{$query},
+<p>You can search the <a href="https://www.debian.org/MailingLists/">Debian
+mailing lists</a> archives using the form below.</p>
+<p>A separate form allows to search for archived mails by
+<a href="https://lists.debian.org/msgid-search/">Message-ID</a>.</p>
+}
+<form name="p" method="get" action="$html{$or{$env{SCRIPT_NAME},omega}}">
+<p>
+Search for: <input name="P" value="$html{$query}" size="65" /><br />
+<input type="radio" name="DEFAULTOP" value="or" $if{$eq{$defaultop,or},checked="checked"} /> Matching any words
+<input type="radio" name="DEFAULTOP" value="and" $if{$eq{$defaultop,and},checked="checked"} /> Matching all words
+&nbsp;&nbsp;&nbsp;&nbsp;<a style="font-size: small;" href="https://wiki.debian.org/DebianMailingLists/SearchHowto">Syntax help</a>
+</p>
+${ FIXME: author filter not working currently
+<p>
+Author: <input type="text" name="author" size="40" value="$html{$cgi{author}}" />
+</p>
+}
+<p>Search lists:<br />
+<select name="B" size="5" multiple="multiple">
+$list{$map{$filterterms{G},<option value="G$substr{$_,1}"$if{$find{$cgilist{B},$_}, selected="selected"}>$html{$if{$eq{$substr{$_,1,7},debian-},$substr{$_,8},$substr{$_,1}}}},,</option>,</option>}
+</select>
+</p>
+<p>
+Sort by:
+<input type="radio" name="SORT" value="" $if{$eq{$cgi{SORT},},checked="checked"} />Relevance
+<input type="radio" name="SORT" value="0" $if{$eq{$cgi{SORT}$cgi{SORTREVERSE},0},checked="checked"} />Date (newest first)
+${ FIXME: we need to pass SORT=0&SORTREVERSE=1 which I can't see how to achieve without JS
+<input type="radio" name="SORT" value="0" $if{$eq{$cgi{SORT}$cgi{SORTREVERSE},01},checked="checked"} />Date (oldest first)
+}
+</p>
+<p>
+Hits per page:
+<select name="HITSPERPAGE">
+$if{$and{$ne{$hitsperpage,10},$ne{$hitsperpage,50},$ne{$hitsperpage,100}},
+<option selected="selected">$hitsperpage</option>}
+<option $if{$eq{$hitsperpage,10},selected="selected"}>10</option>
+<option $if{$eq{$hitsperpage,50},selected="selected"}>50</option>
+<option $if{$eq{$hitsperpage,100},selected="selected"}>100</option>
+</select>
+${ FIXME: language filter not working currently
+Preferred language:
+$def{language,$or{$cgi{language},$transform{[^a-z].*,,$env{HTTP_ACCEPT_LANGUAGE}},en}}
+$def{usedlangs,$map{$filterterms{L},$substr{$_,1}}}
+<select name="language">
+$list{$map{$lookup{codetolang,*keys*},$if{$find{$usedlangs,$_},<option value="$_" $if{$eq{$language,$_},selected="selected"}>$html{$lookup{codetolang,$_}}}},,</option>,</option>}
+</select>
+}
+</p>
+<p>
+<input type="submit" value="Search" />
+</p>
+<hr />
+$or{$html{$error},
+$if{$eq{$msize,0},
+$if{$query,No documents match your query,Searching $nice{$dbsize} documents},
+<p style="margin-top: 0px;">
+$if{$not{$msizeexact},
+ $nice{$add{$topdoc,1}}-$nice{$last} of about $nice{$msize} matches,
+ $if{$and{$eq{$last,$msize},$eq{$topdoc,0}},
+  All $nice{$msize} matches,
+  $nice{$add{$topdoc,1}}$if{$ne{$add{$topdoc,1},$last},-$nice{$last}} of exactly $nice{$msize} matches}
+}
+<small>found in $time seconds</small>
+</p>
+<hr />
+<p style="text-align: center; margin-bottom: 10pt">
+${suppress next, prev, and page links if there's only one page}
+$if{$ne{$lastpage,1},
+$set{a,$if{$opt{pagelink_height}, HEIGHT=$opt{pagelink_height}}$if{$opt{pagelink_width}, WIDTH=$opt{pagelink_width}}}
+
+${1-W ... X-(this)-Y ...}
+$set{w,$min{3,$add{$thispage,-1}}}
+$set{x,$max{$add{$opt{w},1},$add{$thispage,-3}}}
+$set{y,$min{$lastpage,$add{$thispage,8}}}
+$PREV
+$map{$range{1,$opt{w}},$PAGE{$_}}
+$if{$ne{$add{$opt{w},1},$opt{x}},...}
+$map{$range{$opt{x},$add{$thispage,-1}},$PAGE{$_}}
+$SPAGE{$thispage}
+$map{$range{$add{$thispage,1},$opt{y}},$PAGE{$_}}
+$if{$ne{$opt{y},$lastpage},...}
+$NEXT
+}
+</p>
+<table>
+$hitlist{<tr><td valign="top">
+${<IMG SRC="/images/xapian-omega/score-$div{$percentage,10}.png" ALT="$percentage%" HEIGHT=16 WIDTH=32>}
+</td>
+<td><b><a href="$field{url}">$html{$or{$field{subject},(no subject)}}</a></b> 
+ $field{author}<br />
+<small>$highlight{$field{sample},$terms}$if{$field{sample},...}</small><br />
+<p style="text-align: right; float: right; font-size: small; margin: 0pt;">
+<a href="$field{url}">$html{$field{url}}</a>
+</p>
+<small>
+$percentage% relevant$. matching:
+<i>$list{$map{$substr{$transform{\tL[a-z]*\t,\t,	$terms	},1,-1},$html{$prettyterm{$_}}},$. ,</i> and <i>}</i></small>${for lynx:}</td></tr>}
+</table>
+
+<br />
+<center>
+${suppress next, prev, and page links if there's only one page}
+$if{$ne{$lastpage,1},
+$set{a,$if{$opt{pagelink_height}, HEIGHT=$opt{pagelink_height}}$if{$opt{pagelink_width}, WIDTH=$opt{pagelink_width}}}
+
+${1-W ... X-(this)-Y ...}
+$set{w,$min{3,$add{$thispage,-1}}}
+$set{x,$max{$add{$opt{w},1},$add{$thispage,-3}}}
+$set{y,$min{$lastpage,$add{$thispage,8}}}
+$PREV
+$map{$range{1,$opt{w}},$PAGE{$_}}
+$if{$ne{$add{$opt{w},1},$opt{x}},...}
+$map{$range{$opt{x},$add{$thispage,-1}},$PAGE{$_}}
+$SPAGE{$thispage}
+$map{$range{$add{$thispage,1},$opt{y}},$PAGE{$_}}
+$if{$ne{$opt{y},$lastpage},...}
+$NEXT
+}
+</center>
+}}
+<br />
+$if{$ne{$topdoc,0},<input type="hidden" name="TOPDOC" value="$topdoc" />}
+$if{$queryterms,<input TYPE=hidden name=xP value="$html{$queryterms}">}
+<input TYPE=hidden name=xFILTERS value="$html{$filters}">
+${
+$if{$dbname,<input TYPE=hidden name=DB value="$html{$dbname}">}
+$if{$fmt,<input TYPE=hidden name=FMT value="$html{$fmt}">}
+$if{$ne{$hitsperpage,10},<input TYPE=hidden name=HITSPERPAGE value=$hitsperpage>}
+$if{$cgi{COLLAPSE},<input TYPE=hidden name=COLLAPSE value="$html{$cgi{COLLAPSE}}">}
+<input TYPE=hidden name=xDB value="$html{$dbname}">
+$list{$relevants,<input TYPE=hidden name=R value=",.,">}
+$if{$cgi{THRESHOLD},<input TYPE=hidden name=THRESHOLD value="$html{$cgi{THRESHOLD}}">}
+${Preserve any B filters used - this needs modifying if you modify this template
+  to have B on radio buttons, SELECT, etc}
+$map{$cgilist{B},<input TYPE=hidden name=B value="$html{$_}">}
+}
+</form>
+
+</div>
+<div id="footer">
+<hr class="hidecss" />
+<p>Back to the <a href="https://www.debian.org/">Debian Project homepage</a>.</p>
+<hr />
+
+<p><small>You may <a href="https://www.debian.org/Bugs/Reporting">submit bugs</a>
+against the list archives using the
+<a href="https://bugs.debian.org/lists.debian.org"><var>lists.debian.org</var>
+pseudo-package</a> or contact the maintainer at
+<a href="mailto:listarchives@debian.org">listarchives@debian.org</a>.
+</small></p>
+
+<p><small>See the Debian <a href="https://www.debian.org/contact">contact
+page</a> for further information on contacting us.</small></p>
+<hr/>
+
+<p><small>Template last modified: 19 February 2008.
+Copyright &copy; 1997-2008 <a href="http://www.spi-inc.org/">SPI</a>;
+See <a href="https://www.debian.org/license">license terms</a> and
+<a href="https://www.debian.org/MailingLists/disclaimer">disclaimer</a>.</small></p>
+
+<div id="footermap">
+<!--UdmComment-->
+<p><strong><a href="https://www.debian.org">Home</a></strong></p>
+    <ul id="footermap-cola">
+                <li><a href="https://www.debian.org/intro/about">About</a>
+                  <ul>
+
+                  <li><a href="https://www.debian.org/social_contract">Social&nbsp;Contract</a></li>
+                  <li><a href="https://www.debian.org/intro/free">Free&nbsp;Software</a></li>
+                  <li><a href="https://www.debian.org/partners/">Partners</a></li>
+                  <li><a href="https://www.debian.org/donations">Donations</a></li>
+                  <li><a href="https://www.debian.org/contact">Contact&nbsp;Us</a></li>
+
+                  </ul>
+                </li>
+        </ul>
+        <ul id="footermap-colb">
+                        <li><a href="https://www.debian.org/distrib/">Getting Debian</a>
+                          <ul>
+                          <li><a href="https://www.debian.org/CD/vendors/">CD vendors</a></li>
+                          <li><a href="https://www.debian.org/CD/">CD ISO images</a></li>
+
+                          <li><a href="https://www.debian.org/distrib/netinst">Network install</a></li>
+                          <li><a href="https://www.debian.org/distrib/pre-installed">Pre-installed</a></li>
+                          </ul>
+                        </li>
+    <li><a href="https://www.debian.org/distrib/packages">Debian&nbsp;Packages</a></li>
+        </ul>
+        <ul id="footermap-colc">
+
+                <li><a href="https://www.debian.org/News/">News</a>
+                  <ul>
+                  <li><a href="https://www.debian.org/News/project/">Project&nbsp;News</a></li>
+                  <li><a href="https://www.debian.org/events/">Events</a></li>
+                  </ul>
+                </li>
+    <li><a href="https://www.debian.org/doc/">Documentation</a>
+
+      <ul>
+      <li><a href="https://www.debian.org/releases/">Release&nbsp;Info</a></li>
+      <li><a href="https://www.debian.org/releases/stable/installmanual">Installation&nbsp;manual</a></li>
+      <li><a href="https://www.debian.org/doc/books">Debian&nbsp;Books</a></li>
+      </ul>
+    </li>
+
+   </ul>
+   <ul id="footermap-cold">
+    <li><a href="https://www.debian.org/support">Support</a>
+          <ul>
+                          <li><a href="https://www.debian.org/international/">Debian&nbsp;International</a></li>
+                          <li><a href="https://www.debian.org/security/">Security&nbsp;Information</a></li>
+
+                          <li><a href="https://www.debian.org/Bugs/">Bug reports</a></li>
+                          <li><a href="https://www.debian.org/MailingLists/">Mailing&nbsp;Lists</a></li>
+                          <li><a href="https://lists.debian.org/">Mailing&nbsp;List&nbsp;Archives</a></li>
+                          <li><a href="https://www.debian.org/ports/">Ports/Architectures</a></li>
+      </ul>
+
+    </li>
+</ul>
+<ul id="footermap-cole">
+    <li><a href="https://www.debian.org/misc/">Miscellaneous</a></li>
+    <li><a href="https://www.debian.org/intro/help">Help Debian</a></li>
+    <li><a href="https://www.debian.org/devel/">Developers'&nbsp;Corner</a></li>
+    <li><a href="https://www.debian.org/sitemap">Site map</a></li>
+
+    <li><a href="https://search.debian.org/">Search</a></li>
+</ul>
+
+
+<!--/UdmComment-->
+</div> <!-- end footermap -->
+<div id="fineprint">
+  <p><small>You may <a href="https://www.debian.org/Bugs/Reporting">submit bugs</a>
+  against the list archives using the
+  <a href="https://bugs.debian.org/lists.debian.org"><var>lists.debian.org</var>
+  pseudo-package</a> or contact the maintainer at
+  <a href="mailto:listmaster@lists.debian.org">listmaster@lists.debian.org</a>.
+  </small></p>
+
+  <p><small>See the Debian <a href="https://www.debian.org/contact">contact
+  page</a> for further information on contacting us.</small></p>
+
+<p>
+  <br>
+  Copyright © 2015
+ <a href="http://www.spi-inc.org/">SPI</a> and others; See <a href="https://www.debian.org/license" rel="copyright">license terms</a><br>
+  Debian is a registered <a href="https://www.debian.org/trademark">trademark</a> of Software in the Public Interest, Inc.
+</p>
+</div>
+</div> <!-- end footer -->
+
+</div>
+
+
+</body>
+</html>
