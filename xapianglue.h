@@ -15,5 +15,6 @@ extern time_t start_time;
 
 void xapian_add_document(const document *d, std::string & list, int year, int month, int msgnum);
 void xapian_delete_document(std::string & list, int year, int month, int  msgnum);
+void xapian_delete_msgid(std::string & msgid);
 void xapian_set_stemmer(const std::string lang);
 long xapian_open_db_for_month(const std::string month, const bool deleteallexisting);

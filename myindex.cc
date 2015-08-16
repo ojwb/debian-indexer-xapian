@@ -188,6 +188,7 @@ int main(int argc, char** argv)
           if ((msgnum > lasthavemsgnum) || regenerate) {
             document * doc = parse_article(msg);
             if (doc != NULL) {
+	      doc->msgid = msgid;
               xapian_add_document(doc, list, year, month, msgnum);
               unflushed_messages++;
             }

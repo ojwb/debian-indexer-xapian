@@ -131,7 +131,15 @@ xapian_add_document(const document *d, std::string & list, int year, int month, 
     else
       sprintf(buf, "%04d", year);      
     doc->add_boolean_term((string("XM")+list+"-")+buf);
-    
+
+    if (d->msgid.size() <= MAX_TERM_LENGTH - 2) {
+	doc->add_boolean_term(string("XI") + d->msgid);
+    } else {
+	// Truncate - we verify the full message id before deleting in cases
+	// where it might be truncated.
+	doc->add_boolean_term(string("XI") + d->msgid.substr(0, MAX_TERM_LENGTH - 2));
+    }
+
     struct tm ts;
     memset(&ts, 0, sizeof(ts));
     ts.tm_year = year-1900;
@@ -181,8 +189,9 @@ xapian_add_document(const document *d, std::string & list, int year, int month, 
     data += '\n';
     data += d->email;
     data += '\n';
-
     data += d->body;
+    data += '\n';
+    data += d->msgid;
 
     if (verbose >= 2) printf("data:[%s]\n\n", data.c_str());
     doc->set_data(data);
