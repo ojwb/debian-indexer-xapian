@@ -20,6 +20,9 @@ extern "C" {
 
 using namespace std;
 
+// Use for the "XI" terms which index message-ids.
+const unsigned MAX_TERM_LENGTH = 250;
+
 Xapian::WritableDatabase db;
 Xapian::Document * doc = NULL;
 Xapian::TermGenerator indexer;
@@ -87,7 +90,7 @@ xapian_delete_document(std::string & list, int year, int month, int  msgnum)
 }
 
 void
-xapian_add_document(const document *d, std::string & list, int year, int month, int  msgnum)
+xapian_add_document(const document *d, std::string & msgid, std::string & list, int year, int month, int  msgnum)
 {
     if (doc == NULL)
 	merror("xapian_add_document called before xapian_new_document");
@@ -132,12 +135,12 @@ xapian_add_document(const document *d, std::string & list, int year, int month, 
       sprintf(buf, "%04d", year);      
     doc->add_boolean_term((string("XM")+list+"-")+buf);
 
-    if (d->msgid.size() <= MAX_TERM_LENGTH - 2) {
-	doc->add_boolean_term(string("XI") + d->msgid);
+    if (msgid.size() <= MAX_TERM_LENGTH - 2) {
+	doc->add_boolean_term(string("XI") + msgid);
     } else {
 	// Truncate - we verify the full message id before deleting in cases
 	// where it might be truncated.
-	doc->add_boolean_term(string("XI") + d->msgid.substr(0, MAX_TERM_LENGTH - 2));
+	doc->add_boolean_term(string("XI") + msgid.substr(0, MAX_TERM_LENGTH - 2));
     }
 
     struct tm ts;
@@ -191,7 +194,7 @@ xapian_add_document(const document *d, std::string & list, int year, int month, 
     data += '\n';
     data += d->body;
     data += '\n';
-    data += d->msgid;
+    data += msgid;
 
     if (verbose >= 2) printf("data:[%s]\n\n", data.c_str());
     doc->set_data(data);
