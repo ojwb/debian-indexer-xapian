@@ -1,4 +1,4 @@
-debian-xapian-indexer
+debian-indexer-xapian
 --------------------- 
 
 [![Build
