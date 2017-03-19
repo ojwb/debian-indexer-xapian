@@ -1,14 +1,4 @@
 language: cpp
 script: make
-compiler:
-    - gcc
-os:
-    - linux
-
-addons:
-    apt:
-        packages:
-            - libxapian-dev
-            - libgmime-2.6-dev
-            - libgcrypt20-dev
-
+before_install:
+      - docker build -t formorer/debian-indexer
