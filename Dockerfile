@@ -5,4 +5,4 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         pkg-config autotools-dev \
 	&& rm -rf /var/lib/apt/lists/*
 
-COPY * /tmp/indexer
+COPY * /tmp/indexer/
