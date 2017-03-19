@@ -18,51 +18,8 @@
 
 import re, time
 import glob, os, sys
+from langcodes import langcodes
 
-
-# TV-COMMENT: This sucks. But is what is a good source?
-langcodes = {
-  "english":"en",
-  "arabic":"ar",
-  "basque":"eu",
-  "belarusian":"be",
-  "bulgarian":"bg",
-  "catalan":"ca",
-  "czech":"cs",
-  "danish":"da",
-  "german":"de",
-  "greek":"el",
-  "esperanto":"eo",
-  "spanish":"es",
-  "finnish":"fi",
-  "french":"fr",
-  "croatian":"hr",
-  "hungarian":"hu",
-  "armenian":"hy",
-  "indonesian":"id",
-  "italian":"it",
-  "japanese":"ja",
-  "korean":"ko",
-  "lithuanian":"lt",
-  "dutch":"nl",
-  "norwegian":"no",
-  "persian":"fa",
-  "polish":"pl",
-  "portuguese":"pt",
-  "romanian":"ro",
-  "russian":"ru",
-  "slovak":"sk",
-  "swedish":"sv",
-  "slovene":"sl",
-  "tamil":"ta",
-  "turkish":"tr",
-  "ukrainian":"uk",
-  "chinese":"zh",
-  "galician":"gl",
-  "vietnamese":"vi",
-  "kannada":"kn",
-  "malayalam":"ml",
-  }
 cfgfile = '/srv/lists.debian.org/smartlist/.etc/lists.cfg'
 deadcfgfile = '/srv/lists.debian.org/smartlist/.etc/lists-dead.cfg'
 mboxdir = '/srv/lists.debian.org/lists/'
