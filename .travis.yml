@@ -1,0 +1,9 @@
+language: cpp
+script: make
+dist: jessie
+compiler:
+    - gcc
+os:
+    - linux
+before_install:
+    - if [ $TRAVIS_OS_NAME == linux ]; then ./deps.sh; fi
