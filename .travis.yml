@@ -7,4 +7,4 @@ before_install:
 
 script: 
     - docker run -t formorer/debian-indexer ls -la /tmp/
-    - docker run -t formorer/debian-indexer cd /tmp/indexer && make
+    - docker run -t formorer/debian-indexer bash -c 'cd /tmp/indexer && make'
