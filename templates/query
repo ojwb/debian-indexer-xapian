@@ -132,11 +132,12 @@ $NEXT
 $hitlist{<tr><td valign="top">
 ${<IMG SRC="/images/xapian-omega/score-$div{$percentage,10}.png" ALT="$percentage%" HEIGHT=16 WIDTH=32>}
 </td>
-<td><b><a href="$field{url}">$html{$or{$field{subject},(no subject)}}</a></b> 
+$def{URL,$transform{^http://,https://,$field{url}}}
+<td><b><a href="$URL">$html{$or{$field{subject},(no subject)}}</a></b>
  $field{author}<br />
 <small>$highlight{$field{sample},$terms}$if{$field{sample},...}</small><br />
 <p style="text-align: right; float: right; font-size: small; margin: 0pt;">
-<a href="$field{url}">$html{$field{url}}</a>
+<a href="$URL">$html{$URL}</a>
 </p>
 <small>
 $percentage% relevant$. matching:
