@@ -19,9 +19,6 @@
 import re, time
 import glob, os, sys
 
-cfgfile = '/org/lists.debian.org/smartlist/.etc/lists.cfg'
-deadcfgfile = '/org/lists.debian.org/smartlist/.etc/lists-dead.cfg'
-mboxdir = '/org/lists.debian.org/lists/'
 
 # TV-COMMENT: This sucks. But is what is a good source?
 langcodes = {
@@ -66,6 +63,9 @@ langcodes = {
   "kannada":"kn",
   "malayalam":"ml",
   }
+cfgfile = '/srv/lists.debian.org/smartlist/.etc/lists.cfg'
+deadcfgfile = '/srv/lists.debian.org/smartlist/.etc/lists-dead.cfg'
+mboxdir = '/srv/lists.debian.org/lists/'
 
 re_comment = re.compile('#.*')
 re_field = re.compile(r'^([a-zA-Z\-]+):\s*(\S*.*)')
