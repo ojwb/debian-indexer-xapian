@@ -6,4 +6,4 @@ compiler:
 os:
     - linux
 before_install:
-    - if [ $TRAVIS_OS_NAME == linux ]; then ./deps.sh; fi
+    - if [ $TRAVIS_OS_NAME == linux ]; then bash -x ./deps.sh; fi
