@@ -37,7 +37,7 @@ langcodes = {
   "slovak":"sk",
   "serbian":"sr",
   "swedish":"sv",
-  "slovene":"sl",
+  "slovenian":"sl",
   "tamil":"ta",
   "turkish":"tr",
   "ukrainian":"uk",
