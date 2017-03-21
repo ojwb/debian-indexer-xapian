@@ -69,7 +69,7 @@ int main(int argc, char** argv)
 
   // argi inited above
   for (; argi<argc; argi++) {
-    // "/org/lists.debian.org/lists/debian-project/2007/debian-project-200709"
+    // "/srv/lists.debian.org/lists/debian-project/2007/debian-project-200709"
     string fn(argv[argi]);
     if (whatsnext == NEXT_LANG) {
       xapian_set_stemmer(fn);

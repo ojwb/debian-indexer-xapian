@@ -1,5 +1,5 @@
 #!/usr/bin/python
-cdbdir = '/org/lists.debian.org/xapian/cdb'
+cdbdir = '/srv/lists.debian.org/xapian/cdb'
 
 import os
 

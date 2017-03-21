@@ -27,7 +27,7 @@ Xapian::WritableDatabase db;
 Xapian::Document * doc = NULL;
 Xapian::TermGenerator indexer;
 
-static string dbpathprefix("/org/lists.debian.org/xapian/data/listdb");
+static string dbpathprefix("/srv/lists.debian.org/xapian/data/listdb");
 
 static int counter = 0;
 static string language, stemmer_language;
