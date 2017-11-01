@@ -148,6 +148,7 @@ static void transform_text_plain(const char *content) {
 }
 
 static void transform_text_html(const char *content) {
+  if (content == NULL) return;
   gchar curChar = 0;
   size_t beg = 0;
   size_t contentLen = strlen(content);
@@ -364,6 +365,7 @@ static void transform_part(GMimeObject *mime_part) {
 }
 
 static void transform_message_rfc822(const char *content) {
+  if (content == NULL) return;
   GMimeStream *stream;
   GMimeParser *parser;
   GMimeMessage *msg;
