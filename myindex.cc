@@ -154,48 +154,58 @@ int main(int argc, char** argv)
 
     parser = g_mime_parser_new_with_stream(stream);
     g_mime_parser_set_scan_from(parser, TRUE);
+    gint64 old_pos = -1;
     while (! g_mime_parser_eos(parser)) {
       msg = g_mime_parser_construct_message(parser);
-      if (msg != 0) {
-        const char* raw_msgid = g_mime_object_get_header(GMIME_OBJECT(msg), "Message-Id");
-        string msgid;
-        if (raw_msgid != NULL)
-          msgid = msgid_strip(raw_msgid);
-        else 
-          msgid = fake_msgid(msg);
-        if (verbose >= 2)
-          cerr << endl << "msgid: " << msgid << endl;
-        if (msgid == "") {
-          cerr << endl << "No msgid" << endl;
-        }
-        else if (seenids.find(msgid) != seenids.end()) {
-          if (verbose > 1)
-            cerr << endl << "dupemsgid: " << msgid << endl;
-        }
-        else if (spamids.find(msgid) != spamids.end()) {
-          if (verbose > 1)
-            cerr << endl << "spam: " << msgid << endl;
-          xapian_delete_document(list, year, month, msgnum);
-          seenids.insert(msgid);
-          msgnum++;
-        }
-        else {
-          if (verbose > 2)
-            cerr << endl << "msgid: " << msgid << endl;
-          if (verbose > 0)
-            cout << "." << flush;
-          seenids.insert(msgid);
-          if ((msgnum > lasthavemsgnum) || regenerate) {
-            document * doc = parse_article(msg);
-            if (doc != NULL) {
-              xapian_add_document(doc, msgid, list, year, month, msgnum);
-              unflushed_messages++;
-            }
-          }
-          msgnum++;
-        }
-        g_object_unref(msg);
-      } 
+      if (msg == 0) {
+	gint64 pos = g_mime_parser_tell(parser);
+	cerr << "g_mime_parser_construct_message(parser) returned NULL at offset " << pos << endl;
+	if (pos == old_pos) {
+	  cerr << "Giving up on '" << fn << "' - GMimeParser is stuck at offset " << pos << endl;
+	  break;
+	}
+	old_pos = pos;
+	continue;
+      }
+
+      const char* raw_msgid = g_mime_object_get_header(GMIME_OBJECT(msg), "Message-Id");
+      string msgid;
+      if (raw_msgid != NULL)
+	msgid = msgid_strip(raw_msgid);
+      else
+	msgid = fake_msgid(msg);
+      if (verbose >= 2)
+	cerr << endl << "msgid: " << msgid << endl;
+      if (msgid == "") {
+	cerr << endl << "No msgid" << endl;
+      }
+      else if (seenids.find(msgid) != seenids.end()) {
+	if (verbose > 1)
+	  cerr << endl << "dupemsgid: " << msgid << endl;
+      }
+      else if (spamids.find(msgid) != spamids.end()) {
+	if (verbose > 1)
+	  cerr << endl << "spam: " << msgid << endl;
+	xapian_delete_document(list, year, month, msgnum);
+	seenids.insert(msgid);
+	msgnum++;
+      }
+      else {
+	if (verbose > 2)
+	  cerr << endl << "msgid: " << msgid << endl;
+	if (verbose > 0)
+	  cout << "." << flush;
+	seenids.insert(msgid);
+	if ((msgnum > lasthavemsgnum) || regenerate) {
+	  document * doc = parse_article(msg);
+	  if (doc != NULL) {
+	    xapian_add_document(doc, msgid, list, year, month, msgnum);
+	    unflushed_messages++;
+	  }
+	}
+	msgnum++;
+      }
+      g_object_unref(msg);
     }
      
     g_object_unref(parser);
