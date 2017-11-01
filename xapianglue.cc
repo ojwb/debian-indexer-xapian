@@ -35,7 +35,7 @@ static string language, stemmer_language;
 void xapian_flush(void)
 {
     try {
-	db.flush();
+	db.commit();
     } catch (const Xapian::Error &e) {
 	merror(e.get_msg().c_str());
     }
