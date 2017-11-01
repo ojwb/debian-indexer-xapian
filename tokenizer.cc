@@ -292,6 +292,10 @@ transform_multipart(GMimeMultipart *mime_part, const GMimeContentType * ct) {
        part to output. */
       
     int num_subparts = g_mime_multipart_get_count(mime_part);
+    if (num_subparts == 0) {
+      /* Odd but happens. */
+      return;
+    }
     for (int i = 0; i < num_subparts; ++i) {
       GMimeObject * child = g_mime_multipart_get_part(mime_part, i);
       ct = g_mime_object_get_content_type(child);
