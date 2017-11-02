@@ -35,7 +35,7 @@ static string language, stemmer_language;
 void xapian_flush(void)
 {
     try {
-	db.flush();
+	db.commit();
     } catch (const Xapian::Error &e) {
 	merror(e.get_msg().c_str());
     }
@@ -175,7 +175,7 @@ xapian_add_document(const document *d, std::string & msgid, std::string & list, 
     else 
 	sprintf(buf, "/%04d/msg%05d.html", year, msgnum);
     //      $set{fieldnames,$split{url list msgno year month subject author}}
-    string url("http://lists.debian.org/");
+    string url("/");
     url += list;
     url += buf;
    

@@ -148,6 +148,7 @@ static void transform_text_plain(const char *content) {
 }
 
 static void transform_text_html(const char *content) {
+  if (content == NULL) return;
   gchar curChar = 0;
   size_t beg = 0;
   size_t contentLen = strlen(content);
@@ -291,6 +292,10 @@ transform_multipart(GMimeMultipart *mime_part, const GMimeContentType * ct) {
        part to output. */
       
     int num_subparts = g_mime_multipart_get_count(mime_part);
+    if (num_subparts == 0) {
+      /* Odd but happens. */
+      return;
+    }
     for (int i = 0; i < num_subparts; ++i) {
       GMimeObject * child = g_mime_multipart_get_part(mime_part, i);
       ct = g_mime_object_get_content_type(child);
@@ -364,6 +369,7 @@ static void transform_part(GMimeObject *mime_part) {
 }
 
 static void transform_message_rfc822(const char *content) {
+  if (content == NULL) return;
   GMimeStream *stream;
   GMimeParser *parser;
   GMimeMessage *msg;
