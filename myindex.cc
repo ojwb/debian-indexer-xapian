@@ -158,6 +158,7 @@ try {
 
     parser = g_mime_parser_new_with_stream(stream);
     g_mime_parser_set_scan_from(parser, TRUE);
+    g_mime_parser_set_respect_content_length(parser, TRUE);
     gint64 old_pos = -1;
     while (! g_mime_parser_eos(parser)) {
       msg = g_mime_parser_construct_message(parser);
