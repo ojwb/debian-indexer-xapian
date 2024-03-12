@@ -98,7 +98,7 @@ $list{$map{$lookup{codetolang,*keys*},$if{$find{$usedlangs,$_},<option value="$_
 <hr />
 $or{$html{$error},
 $if{$eq{$msize,0},
-$if{$query,No documents match your query,Searching $nice{$dbsize} documents},
+$if{$query,No messages match your query,Searching $nice{$dbsize} messages},
 <p style="margin-top: 0px;">
 $if{$not{$msizeexact},
  $nice{$add{$topdoc,1}}-$nice{$last} of about $nice{$msize} matches,
