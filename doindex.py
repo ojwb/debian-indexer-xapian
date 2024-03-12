@@ -23,6 +23,7 @@ from langcodes import langcodes
 cfgfile = '/srv/lists.debian.org/smartlist/.etc/lists.cfg'
 deadcfgfile = '/srv/lists.debian.org/smartlist/.etc/lists-dead.cfg'
 mboxdir = '/srv/lists.debian.org/lists/'
+dbdir = '/srv/lists.debian.org/xapian/data/'
 
 re_comment = re.compile('#.*')
 re_field = re.compile(r'^([a-zA-Z\-]+):\s*(\S*.*)')
@@ -142,5 +143,17 @@ for anmbox in mboxestoindex:
 #print "calling %s"%(' '.join(opts))
 if os.spawnv(os.P_WAIT,'./myindex', opts):
   raise Exception("myindex %s returned error"%' '.join(opts))
+
+shards = [f for f in os.listdir(dbdir) if f.startswith('listdb-')]
+shards.sort()
+new_default = ''
+for f in shards:
+    new_default = new_default + 'auto ' + f + '\n'
+current_default = open(dbdir + 'default').read()
+if new_default != current_default:
+    print("Updating shard list to have %d entries" % len(shards))
+    open(dbdir + 'default.new').write(new_default)
+    os.rename(dbdir + 'default.new', dbdir + 'default')
+
 if timestampfn:
   print >> open(timestampfn,"w"), thisruntimestamp
