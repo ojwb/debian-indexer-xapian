@@ -13,6 +13,9 @@
 #include "tokenizer.h"
 #include "xapianglue.h"
 #include "util.h"
+
+#include <xapian.h>
+
 using namespace std;
 
 string msgid_strip(string aline)
@@ -24,15 +27,16 @@ string msgid_strip(string aline)
    return aline;
 }
 
+size_t unflushed_messages = 0;
+
 int main(int argc, char** argv)
-{
+try {
   GMimeStream *stream;
   GMimeParser *parser;
   GMimeMessage *msg = 0;
 
   int fh;
 
-  size_t unflushed_messages = 0;
   size_t flush_interval = 100000;
   bool regenerate = false;
   char *dbpathprefix = NULL;
@@ -227,4 +231,17 @@ int main(int argc, char** argv)
   if (verbose != 0)
     cout << endl << "DONE" << endl;
 
+} catch (const Xapian::DatabaseCorruptError& e) {
+  cerr << "\nException: " << e.get_description() << endl;
+  tokenizer_fini();
+  exit(1);
+} catch (const Xapian::Error& e) {
+  cerr << "\nException: " << e.get_description() << endl;
+  if (unflushed_messages>0) {
+    cerr << "Trying to commit changes..." << endl;
+    xapian_flush();
+    cerr << "OK, that worked at least" << endl;
+  }
+  tokenizer_fini();
+  exit(1);
 }
