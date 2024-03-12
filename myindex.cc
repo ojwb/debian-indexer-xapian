@@ -146,7 +146,7 @@ int main(int argc, char** argv)
        }
     } 
     // cout << "number spam msgids: " << spamids.size() << endl;
-     seenids.clear();
+    seenids.clear();
 
     int msgnum = 0;
     
