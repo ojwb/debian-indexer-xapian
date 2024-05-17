@@ -580,7 +580,7 @@ document* parse_article(GMimeMessage* msg) {
       date = g_mime_message_get_date(msg);
       if (date) {
         doc.date = g_date_time_to_unix(date);
-        g_date_time_unref(date);
+        // g_date_time_unref(date);
       }
       /* int i = (gmt_offset<0 ? -1 : 1);
       gmt_offset *= i;
