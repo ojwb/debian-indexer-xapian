@@ -13,4 +13,4 @@ clean:
 	-rm -f myindex *.o *.pyc
 
 myindex: $(OFILES)
-	$(CXX) -g -o myindex $(LIBS) $(OFILES)
+	$(CXX) -g -o myindex $(OFILES) $(LIBS) 
