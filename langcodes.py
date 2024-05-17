@@ -49,14 +49,14 @@ langcodes = {
   "sicilian":"it",
   }
 
-ls = langcodes.keys()
-ls.sort()
+ls = sorted(langcodes.keys())
+
 # proper order for codes: by language name
 cs = map(langcodes.get, ls)
 f1 = os.popen("cdb -cm "+os.path.join(cdbdir,"langtocode"),"w")
 f2 = os.popen("cdb -cm "+os.path.join(cdbdir,"codetolang"),"w")
 for l,c in langcodes.items():
-  print >> f1, l,c
-  print >> f2, c,l
-print >> f1, '*keys*', '\t'.join(ls)
-print >> f2, '*keys*', '\t'.join(cs)
+  print (l,c, file=f1)
+  print (c,l, file=f2)
+print ('*keys*', '\t'.join(ls), file=f1)
+print ( '*keys*', '\t'.join(cs), file=f2)

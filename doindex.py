@@ -41,10 +41,10 @@ def get_listinfo(cfgfile):
       field = m.group(1).lower()
       value = m.group(2)
       if field == 'list':
-	listname = value.split('@')[0]
-	li[listname] = {'shortname':listname}
+        listname = value.split('@')[0]
+        li[listname] = {'shortname':listname}
       if field in li[listname]:
-	print(("Duplicate field %s for list %s"%(field,listname)))
+        print(("Duplicate field %s for list %s"%(field,listname)))
       li[listname][field] = value
   return li
 
