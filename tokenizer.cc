@@ -403,7 +403,7 @@ document* parse_article(GMimeMessage* msg) {
     if (default_charset == NULL)
       default_charset = "iso-8859-1";
     doc_body_length = 0;
-    const char *from = g_mime_message_get_from(msg);
+    const char *from = internet_address_list_to_string (g_mime_message_get_from(msg), NULL, FALSE);
     if (from) {
 	string name = from;
 	/* if (strstr(from, "=?")) {
