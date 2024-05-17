@@ -445,7 +445,7 @@ document* parse_article(GMimeMessage* msg) {
 
 	string author;
 	InternetAddressList *iaddr_list;
-	if ((iaddr_list = internet_address_list_parse(name.c_str())) != NULL &&
+	if ((iaddr_list = internet_address_list_parse(NULL, name.c_str())) != NULL &&
 	    internet_address_list_length(iaddr_list) > 0) {
 	    /* FIXME: Just look at the first address for now */
 	    InternetAddress *iaddr = internet_address_list_get_address(iaddr_list, 0);
@@ -466,7 +466,7 @@ document* parse_article(GMimeMessage* msg) {
                   j = j-i+2;
                   if (verbose > 1)
                     cout << endl << "#BEFORE#" << author << endl;
-                  char *s = g_mime_utils_header_decode_text(author.substr(i,j).c_str());
+                  char *s = g_mime_utils_header_decode_text(NULL, author.substr(i,j).c_str());
                   author.replace(i,j, s);
                   free(s);
                   if (verbose > 1)
@@ -514,7 +514,7 @@ document* parse_article(GMimeMessage* msg) {
 		}
 	    } else {
 		internet_address_set_name(iaddr, "");
-		char * address = internet_address_to_string(iaddr, FALSE);
+		char * address = internet_address_to_string(iaddr, NULL, FALSE);
 		if (verbose > 0)
                   cout << "group email " << name << " -> " << address << endl;
 		doc.email = address;
@@ -577,7 +577,12 @@ document* parse_article(GMimeMessage* msg) {
 
     {
       int gmt_offset;
-      g_mime_message_get_date(msg, &doc.date, &gmt_offset);
+      GDateTime *date;
+      date = g_mime_message_get_date(msg);
+      if (date) {
+        doc.date = g_date_time_to_unix(date);
+        g_date_time_unref(date);
+      }
       /* int i = (gmt_offset<0 ? -1 : 1);
       gmt_offset *= i;
       doc.date -= i*60*((gmt_offset/100*60)+(gmt_offset%100)); */
