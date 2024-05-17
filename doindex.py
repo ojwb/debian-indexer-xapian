@@ -36,7 +36,7 @@ def get_listinfo(cfgfile):
     l = re_comment.sub('',l)
     m = re_field.match(l)
     if not m and l.strip():
-      print "What to do with",l
+      print(("What to do with",l))
     if m:
       field = m.group(1).lower()
       value = m.group(2)
@@ -44,7 +44,7 @@ def get_listinfo(cfgfile):
 	listname = value.split('@')[0]
 	li[listname] = {'shortname':listname}
       if field in li[listname]:
-	print "Duplicate field %s for list %s"%(field,listname)
+	print(("Duplicate field %s for list %s"%(field,listname)))
       li[listname][field] = value
   return li
 
@@ -59,11 +59,11 @@ def get_lang(listname):
     lang = 'english'
   lang = langcodes.get(lang)
   if not lang:
-    print >> sys.stderr, "Language code unknown for language '%s' of list '%s'"%(lang,listname)
+    print("Language code unknown for language '%s' of list '%s'"%(lang,listname), file=sys.stderr)
     lang = 'english'
   return lang
 
-k = listinfo.keys()
+k = list(listinfo.keys())
 k.sort()
 
 # something is up with cdwrite, but never mind
@@ -100,17 +100,16 @@ if cmdlopts and cmdlopts[0] in ['--all','--timestamp']:
     ln = os.path.basename(a)
     mboxestoindex += get_mboxes(ln)
   if timestampfn:
-    mboxestoindex = filter(lambda x: os.stat(x).st_mtime >= lastruntimestamp,
-                           mboxestoindex)
+    mboxestoindex = [x for x in mboxestoindex if os.stat(x).st_mtime >= lastruntimestamp]
 elif cmdlopts:
   mboxestoindex = cmdlopts
 else:
   dousage = True
 if dousage:
-  print """usage: %s listmbox [listmbox ...]
+  print("""usage: %s listmbox [listmbox ...]
 
 or     %s --all
-"""%(sys.argv[0],sys.argv[0])
+"""%(sys.argv[0],sys.argv[0]))
   sys.exit()
 
 lastlang = None
@@ -120,11 +119,11 @@ for anmbox in mboxestoindex:
   ln, month = bn.rsplit('-',1)
 
   if ln not in listinfo:
-    print ln,"not found, skipping"
+    print(ln,"not found, skipping")
   elif ln in skip:
-    print ln,"skipped by config"
+    print(ln,"skipped by config")
   elif listinfo[ln]["section"] in ["spi","lsb","other"]:
-    print ln,"is in section",listinfo[ln]["section"]+", skipping"
+    print(ln,"is in section",listinfo[ln]["section"]+", skipping")
   else:
     lang = get_lang(ln)
     #print "bn",bn,"ln",ln,"month",month,"lang",lang
@@ -151,9 +150,9 @@ for f in shards:
     new_default = new_default + 'auto ' + f + '\n'
 current_default = open(dbdir + 'default').read()
 if new_default != current_default:
-    print("Updating shard list to have %d entries" % len(shards))
+    print(("Updating shard list to have %d entries" % len(shards)))
     open(dbdir + 'default.new').write(new_default)
     os.rename(dbdir + 'default.new', dbdir + 'default')
 
 if timestampfn:
-  print >> open(timestampfn,"w"), thisruntimestamp
+  print(thisruntimestamp, file=open(timestampfn,"w"))
