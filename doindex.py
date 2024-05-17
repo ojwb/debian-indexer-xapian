@@ -32,7 +32,7 @@ re_mbox = r'(?:/|^)([a-z0-9\-]+)/(?:(\d{4})/\1-\2\d{2}|\1-\d{4})$'
 def get_listinfo(cfgfile):
   li = {}
   listname = None
-  for l in open(cfgfile):
+  for l in open(cfgfile, encoding='latin-1'):
     l = re_comment.sub('',l)
     m = re_field.match(l)
     if not m and l.strip():
