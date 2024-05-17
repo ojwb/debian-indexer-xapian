@@ -576,7 +576,6 @@ document* parse_article(GMimeMessage* msg) {
     }
 
     {
-      int gmt_offset;
       GDateTime *date;
       date = g_mime_message_get_date(msg);
       if (date) {
