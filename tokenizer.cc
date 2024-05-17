@@ -231,7 +231,7 @@ static void transform_simple_part(GMimePart* part) {
     *p = tolower(*p);
 
   GMimeStream * out = g_mime_stream_mem_new();
-  GMimeDataWrapper * data = g_mime_part_get_content_object(part);
+  GMimeDataWrapper * data = g_mime_part_get_content(part);
   if (g_mime_data_wrapper_write_to_stream(data, out) < 0) {
     /* FIXME: How best to handle? */
     g_object_unref(out);
@@ -375,7 +375,7 @@ static void transform_message_rfc822(const char *content) {
   // fprintf(stderr, "RFC822...\n");
   stream = g_mime_stream_mem_new_with_buffer(content, strlen(content));
   parser = g_mime_parser_new_with_stream(stream);
-  msg = g_mime_parser_construct_message(parser);
+  msg = g_mime_parser_construct_message(parser, NULL);
   g_object_unref(parser);
   g_object_unref(stream);
   if (msg != 0) {
@@ -403,7 +403,7 @@ document* parse_article(GMimeMessage* msg) {
     if (default_charset == NULL)
       default_charset = "iso-8859-1";
     doc_body_length = 0;
-    const char *from = g_mime_message_get_sender(msg);
+    const char *from = g_mime_message_get_from(msg);
     if (from) {
 	string name = from;
 	/* if (strstr(from, "=?")) {
@@ -445,7 +445,7 @@ document* parse_article(GMimeMessage* msg) {
 
 	string author;
 	InternetAddressList *iaddr_list;
-	if ((iaddr_list = internet_address_list_parse_string(name.c_str())) != NULL &&
+	if ((iaddr_list = internet_address_list_parse(name.c_str())) != NULL &&
 	    internet_address_list_length(iaddr_list) > 0) {
 	    /* FIXME: Just look at the first address for now */
 	    InternetAddress *iaddr = internet_address_list_get_address(iaddr_list, 0);
@@ -598,7 +598,7 @@ dontindex:
 }
 
 void tokenizer_init(void) {
-  g_mime_init(GMIME_ENABLE_RFC2047_WORKAROUNDS);
+  g_mime_init();
 }
 
 void tokenizer_fini(void) {

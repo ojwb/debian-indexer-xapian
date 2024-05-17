@@ -157,11 +157,11 @@ try {
     stream = g_mime_stream_fs_new(fh);
 
     parser = g_mime_parser_new_with_stream(stream);
-    g_mime_parser_set_scan_from(parser, TRUE);
+    g_mime_parser_set_format(parser, GMIME_FORMAT_MESSAGE);
     g_mime_parser_set_respect_content_length(parser, TRUE);
     gint64 old_pos = -1;
     while (! g_mime_parser_eos(parser)) {
-      msg = g_mime_parser_construct_message(parser);
+      msg = g_mime_parser_construct_message(parser, NULL);
       if (msg == 0) {
 	gint64 pos = g_mime_parser_tell(parser);
 	cerr << "g_mime_parser_construct_message(parser) returned NULL at offset " << pos << endl;

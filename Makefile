@@ -1,4 +1,4 @@
-CPPFLAGS = $(shell pkg-config --cflags gmime-2.6)
+CPPFLAGS = $(shell pkg-config --cflags gmime-3.0)
 #CPPFLAGS += $(shell xapian-config --cxxflags)
 LIBS = $(shell pkg-config --libs gmime-2.6)
 LIBS += $(shell xapian-config --libs)
