@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # wrapper script for calling myindex with language specification etc.
 
 # TV-TODO: add creation of stub database!
