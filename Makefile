@@ -1,7 +1,7 @@
 CPPFLAGS = $(shell pkg-config --cflags gmime-3.0)
 #CPPFLAGS += $(shell xapian-config --cxxflags)
-LIBS = $(shell pkg-config --libs gmime-2.6)
-LIBS += $(shell xapian-config --libs)
+LIBS = $(shell pkg-config --libs gmime-3.0)
+LIBS += $(shell xapian-config --cxxflags --libs)
 LIBS += -lgcrypt
 CXXFILES = xapianglue myindex tokenizer util
 OFILES = $(CFILES:=.o) $(CXXFILES:=.o)
