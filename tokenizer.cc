@@ -325,7 +325,6 @@ transform_multipart(GMimeMultipart *mime_part, const GMimeContentType * ct) {
     }
 
     transform_part(preferred);
-
   } else if (! strcmp(subtype, "digest")) {
     /* multipart/digest message. */
     GMimeContentType * ct;

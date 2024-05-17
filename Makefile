@@ -10,7 +10,7 @@ CXXFLAGS = -Wall -W -O2 -g
 all: myindex
 
 clean:
-	-rm -f myindex *.o
+	-rm -f myindex *.o *.pyc
 
 myindex: $(OFILES)
 	$(CXX) -g -o myindex $(LIBS) $(OFILES)
