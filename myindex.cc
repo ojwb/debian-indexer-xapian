@@ -202,8 +202,12 @@ try {
 	  cout << "." << flush;
 	seenids.insert(msgid);
 	if ((msgnum > lasthavemsgnum) || regenerate) {
+    if (verbose > 0)
+      cout << "trying to parse article" << endl;
 	  document * doc = parse_article(msg);
 	  if (doc != NULL) {
+      if (verbose > 0)
+        cout << "parsed article" << endl;
 	    xapian_add_document(doc, msgid, list, year, month, msgnum);
 	    unflushed_messages++;
 	  }
